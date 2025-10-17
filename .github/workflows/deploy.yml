@@ -51,6 +51,8 @@ jobs:
           find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/CELINE/|/CELINE/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/fonts/|/fonts/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/public/|/public/|g' {} \;
+          # Create 404.html for client-side routing
+          cp dist/index.html dist/404.html
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
