@@ -33,29 +33,18 @@ jobs:
           cd react-portfolio
           npm ci
       
-      - name: Build for GitHub Pages
+      - name: Build
         run: |
           cd react-portfolio
           npm run build
       
-      - name: Build for Custom Domain
+      - name: Fix asset paths for custom domain
         run: |
           cd react-portfolio
-          # Temporarily change base path for custom domain build
-          sed -i 's|base: '\''/alichaaraoui.com/'\'',|base: '\''/'\'',|g' vite.config.js
-          npm run build
-          # Copy custom domain build to a separate folder
-          cp -r dist dist-custom
-          # Restore original vite.config.js
-          git checkout vite.config.js
-      
-      - name: Prepare Deployment
-        run: |
-          cd react-portfolio
-          # For custom domain, we need the root-optimized version
-          # Copy custom domain files to main dist folder
-          cp -r dist-custom/* dist/
-          # Fix any remaining paths
+          # Fix asset paths in index.html for custom domain compatibility
+          sed -i 's|/alichaaraoui.com/assets/|/assets/|g' dist/index.html
+          sed -i 's|/alichaaraoui.com/vite.svg|/vite.svg|g' dist/index.html
+          # Fix image paths in JavaScript files
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/CELINE/|/CELINE/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/fonts/|/fonts/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/public/|/public/|g' {} \;
