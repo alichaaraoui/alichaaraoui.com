@@ -9,8 +9,6 @@ const Hero = ({ darkMode }) => {
   const [col1Complete, setCol1Complete] = useState(false);
   const [col2Complete, setCol2Complete] = useState(false);
   
-  console.log('Hero component rendering, darkMode:', darkMode);
-  
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: {

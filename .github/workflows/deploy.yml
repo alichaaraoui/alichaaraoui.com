@@ -48,6 +48,10 @@ jobs:
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/CELINE/|/CELINE/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/fonts/|/fonts/|g' {} \;
           find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/public/|/public/|g' {} \;
+          # Fix react-portfolio paths that might still exist
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/CELINE/|/CELINE/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/fonts/|/fonts/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/public/|/public/|g' {} \;
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
