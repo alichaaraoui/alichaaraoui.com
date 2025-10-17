@@ -41,6 +41,10 @@ jobs:
       - name: Fix asset paths for custom domain
         run: |
           cd react-portfolio
+          # Copy CELINE folder to dist root for custom domain
+          cp -r CELINE dist/
+          # Copy fonts folder to dist root for custom domain
+          cp -r public/fonts dist/
           # Fix asset paths in index.html for custom domain compatibility
           sed -i 's|/alichaaraoui.com/assets/|/assets/|g' dist/index.html
           sed -i 's|/alichaaraoui.com/vite.svg|/vite.svg|g' dist/index.html
