@@ -35,16 +35,16 @@ const ArchitectureProject = ({ darkMode }) => {
       type: 'Theater Design',
       area: 'Carolina Theater Renovation',
       award: 'AIA Advanced Design Award',
-      awardLogo: '/CELINE/AIA_Award.png', // Will invert for light mode
+      awardLogo: '/react-portfolio/CELINE/AIA_Award.png', // Will invert for light mode
       description: 'The Celine Carolina Theater emerges from the act of crumpling. Lifts and folds create thresholds and clear entryways, guiding circulation as if movement itself were choreographed. Nested layers of crumplings carve out space for performance, ranging from intimate experiences to grand stages. The building becomes both stage and scenography, where every fold directs, every lift frames, and every nest houses.',
       concept: 'An interpretation of what the future of theater is versus that of the 1960s Original Carolina Theater for blackbox movies and celebrity acts. The design translates the logic of crumpled surfaces into spatial and structural systems through dry connections—overlaps, interlocking joints, and clips. The folded surfaces begin to span, lean, and overlap, creating moments of enclosure and openness, transforming irregular, crumpled geometries into self-supporting volumes.',
-      heroImage: '/CELINE/CelineCover.png',
+      heroImage: '/react-portfolio/CELINE/CelineCover.png',
       images: {
-        paperTectonics: '/CELINE/paper-tectonics.png',
-        paperModels: '/CELINE/paper-models.png',
-        surfaceTectonics: '/CELINE/surface-tectonics.jpg',
-        architecturalForm: '/CELINE/architectural-form.jpg',
-        structureDetails: '/CELINE/structure-details.jpg',
+        paperTectonics: '/react-portfolio/CELINE/paper-tectonics.png',
+        paperModels: '/react-portfolio/CELINE/paper-models.png',
+        surfaceTectonics: '/react-portfolio/CELINE/surface-tectonics.jpg',
+        architecturalForm: '/react-portfolio/CELINE/architectural-form.jpg',
+        structureDetails: '/react-portfolio/CELINE/structure-details.jpg',
       },
       galleryImages: [], // Will be populated dynamically
     },
