@@ -36,11 +36,17 @@ function App() {
   // Determine basename based on the current URL
   const getBasename = () => {
     if (import.meta.env.DEV) return "";
+    
+    console.log('Current hostname:', window.location.hostname);
+    console.log('Current pathname:', window.location.pathname);
+    
     // If we're on the GitHub Pages URL, use the basename
     if (window.location.hostname === 'alichaaraoui.github.io') {
+      console.log('Using GitHub Pages basename: /alichaaraoui.com');
       return "/alichaaraoui.com";
     }
     // If we're on the custom domain, no basename needed
+    console.log('Using custom domain basename: (empty)');
     return "";
   };
 
