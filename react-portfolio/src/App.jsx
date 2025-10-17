@@ -34,7 +34,7 @@ function App() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   return (
-    <Router basename="/alichaaraoui.com">
+    <Router basename={import.meta.env.PROD ? "/alichaaraoui.com" : ""}>
       <CustomCursor darkMode={darkMode} />
       
       <AnimatePresence mode="wait">
