@@ -50,6 +50,29 @@ function App() {
     return "";
   };
 
+  // Fix asset paths for custom domain
+  useEffect(() => {
+    if (import.meta.env.PROD && window.location.hostname !== 'alichaaraoui.github.io') {
+      // We're on custom domain, fix asset paths
+      const links = document.querySelectorAll('link[href*="/alichaaraoui.com/"]');
+      const scripts = document.querySelectorAll('script[src*="/alichaaraoui.com/"]');
+      
+      links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href) {
+          link.setAttribute('href', href.replace('/alichaaraoui.com/', '/'));
+        }
+      });
+      
+      scripts.forEach(script => {
+        const src = script.getAttribute('src');
+        if (src) {
+          script.setAttribute('src', src.replace('/alichaaraoui.com/', '/'));
+        }
+      });
+    }
+  }, []);
+
   return (
     <Router basename={getBasename()}>
       <CustomCursor darkMode={darkMode} />
