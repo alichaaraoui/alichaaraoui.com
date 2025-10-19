@@ -43,7 +43,7 @@ jobs:
           cd react-portfolio
           # Copy CELINE folder to dist root for custom domain
           cp -r public/CELINE dist/
-          # Copy HELOYS folder to dist root for custom domain
+          # Copy HELOYS folder to dist root for custom domain  
           cp -r public/HELOYS dist/
           # Copy fonts folder to dist root for custom domain
           cp -r public/fonts dist/
