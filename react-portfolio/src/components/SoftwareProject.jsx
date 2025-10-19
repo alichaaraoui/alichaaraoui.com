@@ -263,11 +263,11 @@ const SoftwareProject = ({ darkMode }) => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
                   >
-                    <img 
-                      src="/alichaaraoui.com/HELOYS/mobile-mockup.png" 
-                      alt="Casa Heloys Mobile Mockup" 
-                      style={{width: '100%', maxWidth: '400px', height: 'auto', margin: '0 auto', display: 'block'}}
-                    />
+                          <img
+                            src="/HELOYS/mobile-mockup.png"
+                            alt="Casa Heloys Mobile Mockup"
+                            style={{width: '100%', maxWidth: '400px', height: 'auto', margin: '0 auto', display: 'block'}}
+                          />
                   </motion.div>
                 </>
               ) : (
@@ -295,7 +295,7 @@ const SoftwareProject = ({ darkMode }) => {
           >
             {projectId === 'heloys' ? (
               <img 
-                src="/alichaaraoui.com/HELOYS/desktop-mockup.png" 
+                src="/HELOYS/desktop-mockup.png" 
                 alt="Casa Heloys Desktop Mockup" 
                 style={{width: '100%', height: 'auto', display: 'block'}}
               />
