@@ -50,6 +50,18 @@ jobs:
           # Fix asset paths in index.html for custom domain compatibility
           sed -i 's|/alichaaraoui.com/assets/|/assets/|g' dist/index.html
           sed -i 's|/alichaaraoui.com/vite.svg|/vite.svg|g' dist/index.html
+          # Fix font paths in CSS files
+          find dist/assets -name "*.css" -exec sed -i 's|/alichaaraoui.com/fonts/|/fonts/|g' {} \;
+          find dist/assets -name "*.css" -exec sed -i 's|/alichaaraoui.com/assets/|/assets/|g' {} \;
+          # Fix image paths in JavaScript files
+          find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/CELINE/|/CELINE/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/fonts/|/fonts/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/alichaaraoui.com/public/|/public/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/CELINE/|/CELINE/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/fonts/|/fonts/|g' {} \;
+          find dist/assets -name "*.js" -exec sed -i 's|/react-portfolio/public/|/public/|g' {} \;
+          # Create 404.html for client-side routing
+          cp dist/index.html dist/404.html
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
