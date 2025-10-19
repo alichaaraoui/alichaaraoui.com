@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const MobileNav = ({ darkMode, toggleDarkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
+  const navigate = useNavigate();
 
   const handleMenuToggle = () => {
     setIsOpen(!isOpen);
@@ -14,6 +16,13 @@ const MobileNav = ({ darkMode, toggleDarkMode }) => {
 
   const handleSectionClick = (section) => {
     setActiveSection(activeSection === section ? null : section);
+  };
+
+  const handleProjectClick = (projectName, type) => {
+    const slug = projectName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    navigate(`/${type}/${slug}`);
+    setIsOpen(false);
+    setActiveSection(null);
   };
 
   return (
@@ -66,49 +75,49 @@ const MobileNav = ({ darkMode, toggleDarkMode }) => {
                   >
                     <div className="projects-mobile-list">
                       <h4>SOFTWARE</h4>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('mobile-investment-guide-app', 'software')}>
                         <span className="project-mobile-name">MOBILE INVESTMENT GUIDE APP</span>
                         <span className="project-mobile-tech">React Native, Firebase, Redux</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('wordl-app', 'software')}>
                         <span className="project-mobile-name">WORDL APP</span>
                         <span className="project-mobile-tech">Swift, UIKit, Core Data</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('online-ordering-system', 'software')}>
                         <span className="project-mobile-name">ONLINE ORDERING SYSTEM</span>
                         <span className="project-mobile-tech">Node.js, Express, MongoDB, React</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('achrakat-3d-game', 'software')}>
                         <span className="project-mobile-name">ACHRAKAT 3D GAME</span>
                         <span className="project-mobile-tech">Unity, C#, Blender</span>
                       </div>
-                      <div className="project-mobile-item">
-                        <span className="project-mobile-name">HELOYS</span>
-                        <span className="project-mobile-tech">Fashion Brand Website</span>
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('heloys', 'software')}>
+                        <span className="project-mobile-name">CASA HELOYS</span>
+                        <span className="project-mobile-tech">React, CSS3, GitHub Pages</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('omvra-studios', 'software')}>
                         <span className="project-mobile-name">OMVRA STUDIOS</span>
                         <span className="project-mobile-tech">Creative Director Website</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('portfolio', 'software')}>
                         <span className="project-mobile-name">PORTFOLIO</span>
                         <span className="project-mobile-tech">React, Vite, Framer Motion</span>
                       </div>
                       
                       <h4>ARCHITECTURE</h4>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('celine', 'architecture')}>
                         <span className="project-mobile-name">CELINE</span>
                         <span className="project-mobile-tech">Rhino, Grasshopper, V-Ray</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('carved-ft-the-kimbell', 'architecture')}>
                         <span className="project-mobile-name">CARVED FT. THE KIMBELL</span>
                         <span className="project-mobile-tech">AutoCAD, Revit, Enscape</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('shuttle-stops', 'architecture')}>
                         <span className="project-mobile-name">SHUTTLE STOPS</span>
                         <span className="project-mobile-tech">SketchUp, Lumion, Photoshop</span>
                       </div>
-                      <div className="project-mobile-item">
+                      <div className="project-mobile-item" onClick={() => handleProjectClick('citadel', 'architecture')}>
                         <span className="project-mobile-name">CITADEL</span>
                         <span className="project-mobile-tech">Rhino, V-Ray, InDesign</span>
                       </div>
@@ -119,36 +128,10 @@ const MobileNav = ({ darkMode, toggleDarkMode }) => {
 
               <button 
                 className="mobile-nav-item"
-                onClick={() => handleSectionClick('about')}
+                onClick={() => { navigate('/experience'); setIsOpen(false); setActiveSection(null); }}
               >
-                <span>ABOUT</span>
-                <div className={`menu-icon-small ${activeSection === 'about' ? 'open' : ''}`}>
-                  <span className="line-small line-small-1"></span>
-                  <span className="line-small line-small-2"></span>
-                </div>
+                <span>EXPERIENCE</span>
               </button>
-              
-              <AnimatePresence>
-                {activeSection === 'about' && (
-                  <motion.div
-                    className="mobile-section-content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="about-mobile-content">
-                      <p>
-                        I'm Ali Chaaraoui, an architectural designer and software engineer passionate
-                        about creating innovative solutions that bridge the gap between physical and
-                        digital spaces. With expertise in both architecture and computer science, I
-                        craft experiences that seamlessly blend spatial design with cutting-edge
-                        technology.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <button 
                 className="mobile-nav-item"

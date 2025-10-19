@@ -139,9 +139,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
                     </button>
                     <button
                       className="mobile-menu-item"
-                      onClick={() => toggleDropdown('about')}
+                      onClick={() => { navigate('/experience'); setActiveDropdown(null); setMobileMenuOpen(false); }}
                     >
-                      ABOUT
+                      EXPERIENCE
                     </button>
                     <button
                       className="mobile-menu-item"
@@ -298,8 +298,8 @@ const Header = ({ darkMode, toggleDarkMode }) => {
                       <span className="project-tech">Unity, C#, Blender</span>
                     </li>
                     <li data-clickable="true" onClick={() => handleProjectClick('heloys', 'software')}>
-                      <span className="project-name">HELOYS</span>
-                      <span className="project-tech">Fashion Brand Website</span>
+                      <span className="project-name">CASA HELOYS</span>
+                      <span className="project-tech">React, CSS3, GitHub Pages</span>
                     </li>
                     <li data-clickable="true" onClick={() => handleProjectClick('omvra-studios', 'software')}>
                       <span className="project-name">OMVRA STUDIOS</span>

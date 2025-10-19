@@ -99,7 +99,7 @@ const ArchitectureProject = ({ darkMode }) => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <GridLines darkMode={darkMode} />
+      <GridLines darkMode={darkMode} maxLines={3} />
       
       <div className="project-navigation">
         {prevProject && (
@@ -134,14 +134,15 @@ const ArchitectureProject = ({ darkMode }) => {
             </div>
           )}
           <div className="hero-overlay">
-            <h1 className="architecture-title">
-              <Typewriter 
-                text={project.title} 
-                delay={500}
-                speed={40}
-                onComplete={() => setTitleComplete(true)}
-              />
-            </h1>
+            <motion.h1 
+              className="architecture-title"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              onAnimationComplete={() => setTitleComplete(true)}
+            >
+              {project.title}
+            </motion.h1>
           </div>
         </motion.div>
 
@@ -181,12 +182,7 @@ const ArchitectureProject = ({ darkMode }) => {
                 <div className="concept-statement-sidebar">
                   <h2>CONCEPT STATEMENT</h2>
                   <p className="concept-statement-text">
-                    <Typewriter 
-                      text="Carolina Theater invites you to experience a performance like no other. A crumpled stage, a chaotic feeling, everywhere all at the same time. The whole building is the star, the show, the circus." 
-                      delay={300}
-                      speed={10}
-                      showCursor={false}
-                    />
+                    Carolina Theater invites you to experience a performance like no other. A crumpled stage, a chaotic feeling, everywhere all at the same time. The whole building is the star, the show, the circus.
                   </p>
                   {project.award && (
                     <div className="award-section">
@@ -222,21 +218,11 @@ const ArchitectureProject = ({ darkMode }) => {
             <div className="case-study-text-section">
               <h2>PAPER TECTONICS</h2>
               <p className="case-study-text">
-                <Typewriter 
-                  text="The process began with studying rules of crumpling and testing their reproducibility both physically and digitally. Working between paper models and Rhino simulations, each variation emphasized the importance of simplification—if a surface could not be built in both mediums, its logic had to be refined." 
-                  delay={400}
-                  speed={10}
-                  showCursor={false}
-                />
+                The process began with studying rules of crumpling and testing their reproducibility both physically and digitally. Working between paper models and Rhino simulations, each variation emphasized the importance of simplification—if a surface could not be built in both mediums, its logic had to be refined.
               </p>
               <h2>PAPER MODELS</h2>
               <p className="case-study-text">
-                <Typewriter 
-                  text="This balance of material intuition and digital precision created a framework where spontaneity became systematic." 
-                  delay={600}
-                  speed={10}
-                  showCursor={false}
-                />
+                This balance of material intuition and digital precision created a framework where spontaneity became systematic.
               </p>
             </div>
             <div className="case-study-image">
@@ -278,28 +264,13 @@ const ArchitectureProject = ({ darkMode }) => {
             <div className="case-study-text-section">
               <h2>SURFACE TECTONICS</h2>
               <p className="case-study-text">
-                <Typewriter 
-                  text="Translating the logic of crumpled surfaces into spatial and structural systems by experimenting with bridging, multiplying, and extending surfaces." 
-                  delay={800}
-                  speed={10}
-                  showCursor={false}
-                />
+                Translating the logic of crumpled surfaces into spatial and structural systems by experimenting with bridging, multiplying, and extending surfaces.
               </p>
               <p className="case-study-text">
-                <Typewriter 
-                  text="The models relied on dry connections—overlaps, interlocking joints, and clips. The folded surfaces begin to span, lean, and overlap, creating moments of enclosure and openness." 
-                  delay={1000}
-                  speed={10}
-                  showCursor={false}
-                />
+                The models relied on dry connections—overlaps, interlocking joints, and clips. The folded surfaces begin to span, lean, and overlap, creating moments of enclosure and openness.
               </p>
               <p className="case-study-text">
-                <Typewriter 
-                  text="Not abstract forms but now walls, slabs, and structural systems, hinting at how surface manipulations can evolve into inhabitable space." 
-                  delay={1200}
-                  speed={10}
-                  showCursor={false}
-                />
+                Not abstract forms but now walls, slabs, and structural systems, hinting at how surface manipulations can evolve into inhabitable space.
               </p>
             </div>
           </motion.div>
@@ -316,20 +287,10 @@ const ArchitectureProject = ({ darkMode }) => {
             <div className="case-study-text-section">
               <h2>ARCHITECTURAL FORM</h2>
               <p className="case-study-text">
-                <Typewriter 
-                  text="The Celine Carolina Theater emerges from the act of crumpling. Lifts and folds create thresholds and clear entryways, guiding circulation as if movement itself were choreographed." 
-                  delay={1400}
-                  speed={10}
-                  showCursor={false}
-                />
+                The Celine Carolina Theater emerges from the act of crumpling. Lifts and folds create thresholds and clear entryways, guiding circulation as if movement itself were choreographed.
               </p>
               <p className="case-study-text">
-                <Typewriter 
-                  text="Nested layers of crumplings carve out space for performance, ranging from intimate experiences to grand stages. The building becomes both stage and scenography, where every fold directs, every lift frames, and every nest houses." 
-                  delay={1600}
-                  speed={10}
-                  showCursor={false}
-                />
+                Nested layers of crumplings carve out space for performance, ranging from intimate experiences to grand stages. The building becomes both stage and scenography, where every fold directs, every lift frames, and every nest houses.
               </p>
             </div>
             <div className="case-study-image">
@@ -364,20 +325,10 @@ const ArchitectureProject = ({ darkMode }) => {
             <div className="case-study-text-section">
               <h2>STRUCTURAL SYSTEM</h2>
               <p className="case-study-text">
-                <Typewriter 
-                  text="The design translates crumpled surfaces into spatial and structural systems through dry connections—overlaps, interlocking joints, and clips. The folded surfaces begin to span, lean, and overlap, creating moments of enclosure and openness." 
-                  delay={1300}
-                  speed={10}
-                  showCursor={false}
-                />
+                The design translates crumpled surfaces into spatial and structural systems through dry connections—overlaps, interlocking joints, and clips. The folded surfaces begin to span, lean, and overlap, creating moments of enclosure and openness.
               </p>
               <p className="case-study-text">
-                <Typewriter 
-                  text="Transforming irregular, crumpled geometries into self-supporting volumes that hint at how surface manipulations can evolve into inhabitable space." 
-                  delay={1500}
-                  speed={10}
-                  showCursor={false}
-                />
+                Transforming irregular, crumpled geometries into self-supporting volumes that hint at how surface manipulations can evolve into inhabitable space.
               </p>
             </div>
           </motion.div>
@@ -394,56 +345,14 @@ const ArchitectureProject = ({ darkMode }) => {
             <h2>PROGRAM</h2>
             <div className="program-grid">
               <div className="program-column">
-                <p className="program-item">
-                  <Typewriter 
-                    text="Rooftop Bar" 
-                    delay={1700}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
-                <p className="program-item">
-                  <Typewriter 
-                    text="Immersive Dining" 
-                    delay={1900}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
-                <p className="program-item">
-                  <Typewriter 
-                    text="Gallery Event Hall" 
-                    delay={2100}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
+                <p className="program-item">Rooftop Bar</p>
+                <p className="program-item">Immersive Dining</p>
+                <p className="program-item">Gallery Event Hall</p>
               </div>
               <div className="program-column">
-                <p className="program-item">
-                  <Typewriter 
-                    text="Admin Offices" 
-                    delay={2300}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
-                <p className="program-item">
-                  <Typewriter 
-                    text="Lobby - Immersive Stage" 
-                    delay={2500}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
-                <p className="program-item">
-                  <Typewriter 
-                    text="Lobby - Ticketing" 
-                    delay={2700}
-                    speed={15}
-                    showCursor={false}
-                  />
-                </p>
+                <p className="program-item">Admin Offices</p>
+                <p className="program-item">Lobby - Immersive Stage</p>
+                <p className="program-item">Lobby - Ticketing</p>
               </div>
             </div>
           </motion.div>
@@ -458,22 +367,8 @@ const ArchitectureProject = ({ darkMode }) => {
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <h2>CONCEPT</h2>
-            <p className="concept-text">
-              <Typewriter 
-                text={project.concept} 
-                delay={200}
-                speed={10}
-                showCursor={false}
-              />
-            </p>
-            <p className="description-text">
-              <Typewriter 
-                text={project.description} 
-                delay={400}
-                speed={10}
-                showCursor={false}
-              />
-            </p>
+            <p className="concept-text">{project.concept}</p>
+            <p className="description-text">{project.description}</p>
           </motion.div>
         )}
 

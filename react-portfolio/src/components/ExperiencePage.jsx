@@ -9,7 +9,7 @@ const ExperiencePage = ({ darkMode }) => {
 
   const experiences = [
     {
-      company: 'LITTLE DIVERSIFIED ARCHITECTURE',
+      company: 'LITTLE',
       role: 'Software Engineer Intern',
       period: 'Mar. 2024 – Present',
       location: 'Charlotte, NC',

@@ -1,7 +1,8 @@
-const GridLines = ({ darkMode }) => {
+const GridLines = ({ darkMode, maxLines = 9 }) => {
   const lineColor = darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
   const isMobile = window.innerWidth <= 768;
   const margin = isMobile ? '20px' : '100px';
+  const lineCount = Array.from({ length: maxLines + 1 }, (_, i) => i);
 
   const lineStyle = {
     position: 'absolute',
@@ -52,12 +53,12 @@ const GridLines = ({ darkMode }) => {
       )}
 
       {/* Horizontal lines - continuing down the page */}
-      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+      {lineCount.map((i) => (
         <div key={`h-${i}`} style={{ ...lineStyle, top: `${i * 40}vh` }}></div>
       ))}
 
       {/* Duplicate horizontal lines - 10px below each original line (skip first) */}
-      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+      {lineCount.slice(1).map((i) => (
         <div key={`h-dup-${i}`} style={{ ...lineStyle, top: `calc(${i * 40}vh + 10px)` }}></div>
       ))}
 

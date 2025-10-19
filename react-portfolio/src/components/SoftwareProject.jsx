@@ -9,11 +9,13 @@ const SoftwareProject = ({ darkMode }) => {
   const navigate = useNavigate();
   const [titleComplete, setTitleComplete] = useState(false);
   const [techComplete, setTechComplete] = useState(false);
+  const [contentComplete, setContentComplete] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setTitleComplete(false);
     setTechComplete(false);
+    setContentComplete(false);
   }, [projectId]);
 
   const projectOrder = [
@@ -69,13 +71,30 @@ const SoftwareProject = ({ darkMode }) => {
       solution: 'Created LOD systems and implemented efficient rendering techniques.',
     },
     'heloys': {
-      title: 'HELOYS',
-      tech: 'Fashion Brand Website',
+      title: 'Casa Heloys',
+      subtitle: 'UI/UX & Web Development — In Progress',
+      tech: 'React, CSS3, GitHub Pages, Local Storage',
       year: '2024',
-      role: 'Web Developer & Designer',
-      description: 'A stunning e-commerce website for a luxury fashion brand featuring elegant animations and seamless shopping experience.',
+      role: 'UI/UX Designer & Frontend Developer',
+      liveUrl: 'https://alichaaraoui.github.io/CasaHeloys/',
+      status: 'Coming Soon',
+      description: 'A modern fashion brand landing page featuring glassmorphism, water-gradient aesthetics, and calm motion design. Built as the foundation for a full e-commerce platform currently in development.',
       challenges: 'Creating a unique shopping experience that reflects the brand\'s luxury identity.',
       solution: 'Designed custom animations and interactions that elevate the browsing experience.',
+      features: [
+        'Water-gradient aesthetic',
+        'Glassmorphism effects',
+        'Responsive design',
+        'Email subscription with Local Storage',
+        'Instagram integration'
+      ],
+      inProgressGoals: [
+        'Full e-commerce functionality',
+        'Product catalog and lookbook',
+        'Cart and checkout system',
+        'Enhanced animations'
+      ],
+      reflection: 'Establishing the digital tone for a modern fashion brand — where design, fashion, and technology converge into one seamless experience.',
     },
     'omvra-studios': {
       title: 'OMVRA STUDIOS',
@@ -116,7 +135,7 @@ const SoftwareProject = ({ darkMode }) => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <GridLines darkMode={darkMode} />
+      <GridLines darkMode={darkMode} maxLines={3} />
       
       <div className="project-navigation">
         {prevProject && (
@@ -146,14 +165,37 @@ const SoftwareProject = ({ darkMode }) => {
               onComplete={() => setTitleComplete(true)}
             />
           </h1>
-          <p className="software-project-tech">
-            <Typewriter 
-              text={project.tech} 
-              delay={titleComplete ? 200 : 9999999}
-              speed={15}
-              onComplete={() => setTechComplete(true)}
-            />
-          </p>
+          {project.subtitle && titleComplete && (
+            <p className="software-project-subtitle">
+              <Typewriter 
+                text={project.subtitle} 
+                delay={200}
+                speed={20}
+                showCursor={false}
+                onComplete={() => setTechComplete(true)}
+              />
+            </p>
+          )}
+          {!project.subtitle && titleComplete && (
+            <p className="software-project-tech">
+              <Typewriter 
+                text={project.tech} 
+                delay={200}
+                speed={15}
+                onComplete={() => setTechComplete(true)}
+              />
+            </p>
+          )}
+          {project.liveUrl && techComplete && (
+            <a 
+              href={project.liveUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="view-live-button"
+            >
+              View Live →
+            </a>
+          )}
         </motion.div>
 
         <motion.div 
@@ -172,67 +214,98 @@ const SoftwareProject = ({ darkMode }) => {
                 <span className="meta-label">ROLE</span>
                 <span className="meta-value">{project.role}</span>
               </div>
+              {projectId === 'heloys' && (
+                <>
+                  <div className="meta-item">
+                    <span className="meta-label">STATUS</span>
+                    <span className="meta-value coming-soon-text">Full e-commerce site coming soon</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-label">TECH STACK</span>
+                    <span className="meta-value">{project.tech}</span>
+                  </div>
+                </>
+              )}
             </>
           )}
         </motion.div>
 
         <motion.div 
           className="software-project-content"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
         >
           {techComplete && (
             <>
-              <div className="content-section">
-                <h2>OVERVIEW</h2>
-                <p>
-                  <Typewriter 
-                    text={project.description} 
-                    delay={100}
-                    speed={10}
-                    showCursor={false}
-                  />
-                </p>
-              </div>
-
-              <div className="content-section">
-                <h2>CHALLENGE</h2>
-                <p>
-                  <Typewriter 
-                    text={project.challenges} 
-                    delay={300}
-                    speed={10}
-                    showCursor={false}
-                  />
-                </p>
-              </div>
-
-              <div className="content-section">
-                <h2>SOLUTION</h2>
-                <p>
-                  <Typewriter 
-                    text={project.solution} 
-                    delay={500}
-                    speed={10}
-                    showCursor={false}
-                  />
-                </p>
-              </div>
+              {projectId === 'heloys' ? (
+                <>
+                  <div className="content-section heloys-left-column">
+                    <h2>OVERVIEW</h2>
+                    <p>{project.description}</p>
+                    <h2 style={{marginTop: '40px'}}>DESIGN & FEATURES</h2>
+                    <ul className="features-list">
+                      {project.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                    </ul>
+                    <h2 style={{marginTop: '40px'}}>IN-PROGRESS GOALS & REFLECTION</h2>
+                    <ul className="features-list">
+                      {project.inProgressGoals.map((goal, index) => (
+                        <li key={index}>{goal}</li>
+                      ))}
+                    </ul>
+                    <p style={{marginTop: '20px'}}>{project.reflection}</p>
+                  </div>
+                  <motion.div 
+                    className="content-section heloys-mobile-section"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <img 
+                      src="/alichaaraoui.com/HELOYS/mobile-mockup.png" 
+                      alt="Casa Heloys Mobile Mockup" 
+                      style={{width: '100%', maxWidth: '400px', height: 'auto', margin: '0 auto', display: 'block'}}
+                    />
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  <div className="content-section">
+                    <h2>OVERVIEW</h2>
+                    <p>{project.description}</p>
+                  </div>
+                  <div className="content-section">
+                    <h2>CHALLENGE</h2>
+                    <p>{project.challenges}</p>
+                  </div>
+                </>
+              )}
             </>
           )}
         </motion.div>
 
-        <motion.div 
-          className="software-project-images"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="image-placeholder">
-            <span>Image Gallery Coming Soon</span>
-          </div>
-        </motion.div>
+        {techComplete && (
+          <motion.div 
+            className="software-project-images"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            {projectId === 'heloys' ? (
+              <img 
+                src="/alichaaraoui.com/HELOYS/desktop-mockup.png" 
+                alt="Casa Heloys Desktop Mockup" 
+                style={{width: '100%', height: 'auto', display: 'block'}}
+              />
+            ) : (
+              <div className="image-placeholder">
+                <span>Image Gallery Coming Soon</span>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
