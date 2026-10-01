@@ -1,26 +1,1804 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+:root {
+  --gutter: 1.5rem;
+  --gap: 0.5rem;
+
+  /* How many columns fill one screen. The strip is COLS wide and scrolls past it. */
+  --cols-visible: 12;
+  --col-w: calc(
+    (100vw - 2 * var(--gutter) - (var(--cols-visible) - 1) * var(--gap)) /
+      var(--cols-visible)
+  );
+
+  --nav-h: 4.5rem;
+  /* The bar itself. On a phone the header is taller than the bar, because the
+     discipline toggle sits under it in the open. */
+  --bar-h: var(--nav-h);
+  --footer-h: 2.25rem;
+  --grid-h: calc(100dvh - var(--nav-h) - var(--footer-h));
+  /* Must match ROWS in data/projects.ts. */
+  --rows: 4;
+  --row-h: calc(var(--grid-h) / var(--rows));
+
+  /* Clearance between a column marker and the tile hanging below it. */
+  --tile-top: 1rem;
+
+  /* Fallback width in columns. Every tile overrides this with its slot's own
+     span, so --tile-w and --grow-w are resolved on .tile rather than here: a
+     custom property substitutes where it is declared, and one declared on
+     :root would never see the override. */
+  --tile-cols: 2;
+
+  /* The wordmark is ~9.66:1, so at this height it runs about 135px wide. */
+  --logo-h: 0.875rem;
+
+  --dur: 450ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* The project-opening zoom. Tune the feel here — ProjectHero reads both. */
+  --open-dur: 900ms;
+  --open-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  /* How long the rest of the page waits while the image is still travelling. */
+  --rise-delay: 0ms;
+  /* The still of the index fading out while the zoom runs beneath it. */
+  --leave-dur: 700ms;
+  /* The incoming page fading up. */
+  --rise-dur: 620ms;
+  --rise-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --rule: #e5e5e5;
+}
+
+@media (max-width: 767px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --cols-visible: 3;
+    /* Just the wordmark and a menu button; the pills drop out of it. */
+    --nav-h: 3.25rem;
+    --bar-h: 3.25rem;
+    /* The focused picture in the phone reel. */
+    --reel-art-w: calc(100vw - 2 * var(--gutter));
+    --reel-art-h: min(calc((100vw - 2 * var(--gutter)) * 0.74), 42vh);
   }
 }
 
+/*
+ * min-height, not height: a sticky child can only stick inside its parent's
+ * box, so pinning body to exactly the viewport let the nav scroll away once
+ * the page ran past one screen.
+ */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/*
+ * The nav is rendered once by the root layout and sits above everything, so the
+ * home screen is one viewport minus that bar and never scrolls; only the strip
+ * does, and only sideways. Project pages are ordinary scrolling documents.
+ */
+.screen {
+  height: calc(100dvh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- nav ---- */
+
+.navbar {
+  height: var(--bar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding-inline: var(--gutter);
+}
+
+.site-logo {
+  display: block;
+  height: var(--logo-h);
+  width: auto;
+}
+
+/* Desktop: the wrapper boxes vanish so the groups land on the nav grid. */
+.nav-groups,
+.nav-groups-clip,
+.nav-groups-inner {
+  display: contents;
+}
+
+.nav-menu-toggle,
+.nav-scrim {
+  display: none;
+}
+
+/* The always-visible discipline toggle. Phone only; on desktop the same nav
+   sits on the bar's second row. */
+.nav-strip {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* No discipline strip before the door is opened, so the header is just the
+     bar and the page below it gets that height back. */
+  html[data-gate] {
+    --nav-h: var(--bar-h);
+  }
+
+  .nav-menu-toggle[hidden] {
+    display: none;
+  }
+
+  /*
+   * Down where a thumb rests, not tucked under the bar at the top — it is the
+   * only control that changes what is on the screen, so it sits within reach.
+   * Floating, so it costs the reel no height.
+   */
+  .nav-strip {
+    position: fixed;
+    left: 50%;
+    bottom: 9rem;
+    transform: translateX(-50%);
+    z-index: 26;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /*
+   * On and off, not loud and quiet. The pill's default is a grey fill for the
+   * chosen one, which read as the disabled one — here the chosen discipline is
+   * solid black and the other is an outline, so which is which is not a matter
+   * of comparing two greys.
+   */
+  .nav-strip .pill {
+    padding: 0.5rem 0.9rem;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    box-shadow: inset 0 0 0 1px var(--color-foreground);
+  }
+
+  .nav-strip .pill[aria-pressed="true"] {
+    background: var(--color-foreground);
+    color: #fff;
+  }
+
+  .nav-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /*
+   * The menu is an overlay rather than part of the bar, so --nav-h stays true
+   * whether it is open or shut and nothing below it shifts.
+   */
+  .nav-groups {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    display: grid;
+    grid-template-rows: 0fr;
+    background: var(--color-background);
+    transition: grid-template-rows var(--dur) var(--ease);
+  }
+
+  .nav-groups[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+
+  .nav-groups-clip {
+    display: block;
+    overflow: hidden;
+  }
+
+  /*
+   * Transparent: the frosted scrim behind it supplies the ground, so the page
+   * reads as blurred glass rather than slivers of text between the bars.
+   */
+  .nav-groups {
+    background: transparent;
+  }
+
+  .nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 24;
+    opacity: 0;
+    pointer-events: none;
+    background: rgb(255 255 255 / 0.5);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    transition: opacity var(--dur) var(--ease);
+  }
+
+  .nav-scrim[data-open="true"] {
+    opacity: 1;
+    /* Tapping the glass counts as clicking outside, which closes the menu. */
+    pointer-events: auto;
+  }
+
+  /* Above the glass, so the wordmark and CLOSE stay sharp. */
+  .navbar {
+    position: relative;
+    z-index: 26;
+  }
+
+  /* Solid, with a hairline so they lift off the blur rather than melting into it. */
+  .nav-groups-inner .pill {
+    box-shadow: 0 1px 0 rgb(10 10 10 / 0.06), 0 6px 20px rgb(10 10 10 / 0.08);
+  }
+
+  .nav-groups-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    padding: 0.35rem var(--gutter) 1.1rem;
+  }
+
+  /* Each group stacks rather than sitting in a row. */
+  .nav-groups-inner .nav-views,
+  .nav-groups-inner .nav-filter {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  /*
+   * The pills become full-width bars. A descendant selector clears the Tailwind
+   * utilities on the button, which are single-class specificity.
+   */
+  .nav-groups-inner .pill {
+    display: block;
+    width: 100%;
+    padding: 1rem 0.75rem;
+    background: var(--color-foreground);
+    color: #fff;
+    font-size: 19px;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  /* Inverted, since the bars themselves are already black. */
+  .nav-groups-inner .pill[aria-pressed="true"],
+  .nav-groups-inner .pill[aria-expanded="true"] {
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* A black square with a plus in it, which turns into a cross when open. */
+  .nav-menu-toggle .pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    padding: 0;
+    background: var(--color-foreground);
+    color: #fff;
+    font-size: 21px;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .nav-menu-toggle .pill:hover {
+    background: var(--color-foreground);
+    opacity: 0.75;
+  }
+
+  .nav-plus {
+    display: block;
+    /* Optical centring: the glyph's own box sits low in the line. */
+    margin-top: -0.08em;
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .nav-menu-toggle .pill[aria-expanded="true"] .nav-plus {
+    transform: rotate(45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-plus {
+      transition: none;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(var(--cols-visible), var(--col-w));
+    column-gap: var(--gap);
+    row-gap: 0.4rem;
+    align-items: center;
+    align-content: center;
+  }
+  .nav-logo {
+    /* The wordmark is wider than a single column. */
+    grid-column: 1 / span 2;
+    grid-row: 1;
+  }
+  /*
+   * Four columns, not three. At readable type the four view pills fill three
+   * columns exactly at the narrow end of desktop, which left MOOD sitting on
+   * top of ABOUT.
+   */
+  .nav-views {
+    grid-column: 4 / span 4;
+    grid-row: 1;
+  }
+  .nav-about {
+    grid-column: 9 / span 2;
+    grid-row: 1;
+  }
+  .nav-contact {
+    grid-column: 11 / span 2;
+    grid-row: 1;
+  }
+  /* The filter sits under the view pills — same column, second line. */
+  .nav-filter {
+    grid-column: 4 / span 6;
+    grid-row: 2;
+  }
+}
+
+/* ------------------------------------------------------------- strip ---- */
+
+.strip {
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+.workgrid {
+  width: max-content;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--col-w));
+  grid-auto-rows: var(--row-h);
+  column-gap: var(--gap);
+  padding-inline: var(--gutter);
+}
+
+.marker {
+  grid-column: var(--col);
+  grid-row: var(--row);
+  align-self: start;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------- tile ---- */
+
+.tile {
+  grid-column: var(--col) / span var(--tile-cols);
+  grid-row: var(--row);
+  position: relative;
+  --tile-w: calc(
+    var(--tile-cols) * var(--col-w) + (var(--tile-cols) - 1) * var(--gap)
+  );
+  /*
+   * The headroom a tile has to grow into: its own row plus whatever the row
+   * above or below it is not using, less the caption. A bottom-anchored tile
+   * in the middle row grows UPWARD, and without this it broke out through the
+   * top of the strip.
+   */
+  --grow-cap-h: calc(
+    var(--row-h) + var(--tile-top) + var(--thumb-h) - 4rem
+  );
+  /*
+   * Enlarged size. Pictures rest at one column, so this is a real jump — three
+   * or four times the width — which is the whole point of the grid. The last
+   * term is the headroom expressed as a width, so the aspect is kept instead of
+   * being cropped away when a tall picture runs out of room.
+   */
+  --grow-w: min(
+    30rem,
+    40vw,
+    48vh,
+    calc(var(--grow-cap-h) * var(--ar))
+  );
+  /*
+   * Height follows the aspect, but never past what the row can hold — a
+   * portrait tile at this width is taller than its row, and an overhanging
+   * bottom row is what put a vertical scrollbar on the strip. object-cover
+   * crops the difference.
+   */
+  --thumb-h: min(
+    calc(var(--tile-w) / var(--ar)),
+    calc(var(--row-h) - var(--tile-top) - 0.75rem)
+  );
+  /* No clamp needed: --grow-w already honours the headroom above. */
+  --grow-h: calc(var(--grow-w) / var(--ar));
+}
+
+.tile:hover,
+.tile:focus-within {
+  z-index: 10;
+}
+
+/*
+ * The growing box is sized in real pixels rather than transform-scaled, so the
+ * caption beside it is never rasterised through a scaled layer — that is what
+ * made the text blurry.
+ */
+.tile-fig {
+  position: absolute;
+  display: block;
+  width: var(--tile-w);
+  /* Explicit rather than aspect-ratio, so the clamp above actually binds. */
+  height: var(--thumb-h);
+  overflow: hidden;
+  transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
+}
+
+.tile-fig:focus-visible {
+  outline: 1px solid var(--color-foreground);
+  outline-offset: 2px;
+}
+
+.tile[data-x="left"] .tile-fig {
+  left: 0;
+}
+.tile[data-x="right"] .tile-fig {
+  right: 0;
+}
+
+/* Top rows grow downward; bottom rows grow upward, so nothing leaves the screen. */
+.tile[data-y="top"] .tile-fig {
+  top: var(--tile-top);
+}
+.tile[data-y="bottom"] .tile-fig {
+  bottom: calc(var(--row-h) - var(--tile-top) - var(--thumb-h));
+}
+
+@media (min-width: 768px) {
+  .tile-fig:hover,
+  .tile-fig:focus-visible {
+    width: var(--grow-w);
+    height: var(--grow-h);
+  }
+}
+
+/*
+ * The caption always rides the edge the tile grows from: under a tile that
+ * grows down, above one that grows up. That keeps it beside the picture without
+ * ever being pushed off the bottom of the frame.
+ */
+.tile-cap {
+  position: absolute;
+  width: calc(var(--grow-w) + 2rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: top var(--dur) var(--ease), bottom var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.tile[data-y="top"] .tile-cap {
+  top: calc(var(--tile-top) + var(--thumb-h) + 0.375rem);
+}
+.tile[data-y="bottom"] .tile-cap {
+  bottom: calc(var(--row-h) - var(--tile-top) + 0.375rem);
+}
+
+.tile[data-x="left"] .tile-cap {
+  left: 0;
+}
+.tile[data-x="right"] .tile-cap {
+  right: 0;
+  text-align: right;
+}
+
+@media (min-width: 768px) {
+  .tile-fig:hover ~ .tile-cap,
+  .tile-fig:focus-visible ~ .tile-cap {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .tile[data-y="top"] .tile-fig:hover ~ .tile-cap,
+  .tile[data-y="top"] .tile-fig:focus-visible ~ .tile-cap {
+    top: calc(var(--tile-top) + var(--grow-h) + 0.375rem);
+  }
+
+  .tile[data-y="bottom"] .tile-fig:hover ~ .tile-cap,
+  .tile[data-y="bottom"] .tile-fig:focus-visible ~ .tile-cap {
+    bottom: calc(
+      var(--row-h) - var(--tile-top) - var(--thumb-h) + var(--grow-h) + 0.375rem
+    );
+  }
+}
+
+/* ---------------------------------------------------------- dropdowns ---- */
+
+/* A black slab hung under the nav, overlaying the strip. */
+.panel {
+  position: absolute;
+  top: 100%;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: 0fr;
+  background: var(--color-foreground);
+  color: #fff;
+  transition: grid-template-rows var(--dur) var(--ease);
+}
+
+/* About brackets the nav items: columns 4 through 10. */
+.panel[data-align="about"] {
+  left: calc(var(--gutter) + 3 * (var(--col-w) + var(--gap)));
+  width: calc(7 * var(--col-w) + 6 * var(--gap));
+}
+
+/* Contact hangs from its own pill and runs to the right edge: columns 9 to 12. */
+.panel[data-align="contact"] {
+  left: calc(var(--gutter) + 8 * (var(--col-w) + var(--gap)));
+  width: calc(4 * var(--col-w) + 3 * var(--gap));
+}
+
+/* Must match the attribute selectors above, or those win on specificity. */
+@media (max-width: 767px) {
+  .panel[data-align="about"],
+  .panel[data-align="contact"] {
+    left: var(--gutter);
+    width: calc(100vw - 2 * var(--gutter));
+  }
+}
+
+.panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.panel-clip {
+  overflow: hidden;
+}
+
+.panel-inner {
+  padding: 1.5rem 1.5rem 1.75rem;
+  max-height: var(--grid-h);
+  overflow-y: auto;
+}
+
+/* Rules and secondary type, keyed to the dark ground. */
+.panel .rule {
+  border-bottom: 1px solid rgb(255 255 255 / 0.18);
+}
+
+.panel .dim {
+  color: #a3a3a3;
+}
+
+.panel-item {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.panel[data-open="true"] .panel-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* ------------------------------------------------------------ footer ---- */
+
+.sitefooter {
+  height: var(--footer-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--gutter);
+}
+
+/* --------------------------------------------------- scrolling panes ---- */
+
+/* Index, list and mood are vertical reading surfaces inside the fixed frame. */
+.pane {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-inline: var(--gutter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-fig,
+  .tile-cap,
+  .panel,
+  .panel-item {
+    transition-duration: 1ms;
+  }
+}
+
+/* -------------------------------------------------------------- note ---- */
+
+/* A message in a grid box. Wider than one column, or it is unreadable. */
+/*
+ * The introduction, dropped over the work: the same black slab as the about
+ * and contact panels, so it belongs to the nav's language rather than
+ * inventing a third one. One frame, no chrome — the close button is the only
+ * thing on it, and it hangs off the corner.
+ */
+.deskwrap {
+  position: relative;
+  height: 100%;
+}
+
+.card {
+  position: absolute;
+  top: var(--card-y, 12%);
+  left: var(--card-x, 6%);
+  z-index: 20;
+  width: min(27rem, 46vw);
+  padding: 1.6rem 1.7rem 1.7rem;
+  background: var(--color-foreground);
+  color: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  /* Hidden until measured and placed, or it flashes in the top-left corner. */
+  visibility: hidden;
+  animation: card-in 420ms var(--ease) both;
+}
+
+.card[data-placed] {
+  visibility: visible;
+}
+
+.card[data-held] {
+  cursor: grabbing;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}
+
+/* A tab off the top-right corner, in the same black as the box, so it reads as
+   part of it rather than as something dropped on top. */
+.card-shut {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  padding: 0.3rem 0.6rem 0.28rem;
+  background: var(--color-foreground);
+  color: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 140ms ease;
+}
+
+.card-shut:hover {
+  opacity: 0.6;
+}
+
+/* Keyed to the dark ground: the statement's own colours assume paper. */
+.card .note-lead,
+.card .note-line {
+  color: #fff;
+}
+
+/* Separates the pieces of the statement, which the grid used to do by placing
+   them rows apart. */
+.card .note-body + .note-body {
+  margin-top: 1.15rem;
+}
+
+.note-body {
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/*
+ * The opening line. The same face as the rest of the statement, set larger —
+ * the contrast is scale, not typeface, so the block reads as one voice. Sized
+ * off the viewport so it never outgrows the box it was given.
+ */
+.note-lead {
+  display: block;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(1.2rem, 1.6vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.9rem;
+}
+
+/*
+ * The statement itself is the one warm thing on an otherwise cold page. A
+ * high-contrast italic serif against the pixel lead and the mono furniture —
+ * the elegance comes from the letterforms, so it is set larger and looser than
+ * the rest of the page rather than being squeezed into the same 11px grid.
+ */
+.note-line {
+  display: block;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.95;
+  letter-spacing: 0.005em;
+  color: var(--color-foreground);
+  max-width: 46ch;
+}
+
+/*
+ * The emphasis. One typeface throughout, because the statement should read as
+ * something someone wrote — a second face, or a highlighted ground, turned it
+ * back into an interface. Weight alone.
+ */
+.note-em {
+  /* <em> is italic by default, which on a monospaced face reads as a second
+     font — exactly what this is meant to avoid. */
+  font-style: normal;
+  font-weight: 600;
+}
+
+
+/*
+ * The caret. A slim rule rather than a block — it marks where the writing has
+ * got to, not where a prompt is. Blinks in steps so it snaps rather than fades.
+ */
+.tw-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1em;
+  margin-left: 0.14em;
+  vertical-align: -0.16em;
+  background: currentColor;
+  animation: caret 1s steps(1, end) infinite;
+}
+
+@keyframes caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-caret {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------- phone grid ---- */
+
+/*
+ * A sideways strip of small tiles makes no sense on a phone. Below the
+ * breakpoint the same markup becomes an ordinary vertical stack of cards,
+ * scrolling inside the screen, with any notes pulled to the top so they are
+ * read first.
+ */
+@media (max-width: 767px) {
+  .strip {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .workgrid {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding-block: 1.25rem 3rem;
+  }
+
+  .marker {
+    display: none;
+  }
+
+  .tile {
+    position: static;
+  }
+
+  .note-body {
+    padding-top: 0;
+    max-width: none;
+    font-size: 12px;
+  }
+
+  .tile-fig {
+    position: static;
+    width: 100%;
+    aspect-ratio: 5 / 4;
+  }
+
+  /* No hover on a phone, so the caption is simply part of the card. */
+  .tile-cap {
+    position: static;
+    width: auto;
+    padding-top: 0.5rem;
+    opacity: 1;
+    text-align: left;
+  }
+}
+
+/* --------------------------------------------------------- phone reel ---- */
+
+.phone-grid {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Stacked full-bleed here, so the measure that suits a three-column grid box
+   only forces needless wrapping — and costs a third of the screen. */
+.phone-notes .note-line {
+  max-width: none;
+}
+
+.phone-notes {
+  padding: 0.9rem var(--gutter) 0.2rem;
+  /* Stacked rather than scattered here, so the pieces need the separation the
+     grid gave them — without it the whole statement reads as one paragraph. */
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/*
+ * The statement and its button, folded away when the reel opens. The grid-rows
+ * trick animates from the content's own height, which a max-height guess never
+ * matches; the reel below simply takes the room as it is given up.
+ */
+.phone-intro {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur) var(--ease),
+    opacity calc(var(--dur) * 0.6) var(--ease);
+}
+
+.phone-intro-clip {
+  overflow: hidden;
+}
+
+.phone-grid[data-reel="open"] .phone-intro {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * Until the reel is asked for it is not merely below the fold, it is out of
+ * the layout: sharing the screen squeezed it to a few cramped rows with the
+ * captions sitting on the thumbnails, which is the first thing a phone visitor
+ * would have seen. The statement takes the screen instead, and gives it back
+ * whole. Scrolling here rather than clipping, for a short phone.
+ */
+.phone-grid[data-reel="shut"] .reel {
+  display: none;
+}
+
+.phone-grid[data-reel="shut"] .phone-intro-clip {
+  overflow-y: auto;
+}
+
+/* The way in. A capsule, because every other control on the page is a hard
+   rectangle and this one is asking to be pressed. */
+/* The way in. Just a nav pill — the same one the disciplines use, so the door
+   and the controls behind it are plainly the same kind of thing. */
+.phone-cta {
+  padding: 1.15rem var(--gutter) 0.35rem;
+}
+
+/*
+ * The reel: a tall track supplies the scroll range while the stage stays put,
+ * and PhoneReel places each project by its distance from the focus. Nothing
+ * here is laid out in flow, so the depth curve is free to compress.
+ */
+.reel {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.reel::-webkit-scrollbar {
+  display: none;
+}
+
+.reel-stage {
+  position: sticky;
+  top: 0;
+  height: 100%;
+}
+
+.reel-track {
+  position: relative;
+  pointer-events: none;
+}
+
+/* One snap point per project, at each multiple of the step. */
+.reel-track i {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  scroll-snap-align: start;
+}
+
+.reel-item {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  margin-top: calc(var(--reel-art-h) / -2);
+  will-change: transform, opacity;
+}
+
+.reel-frame {
+  position: relative;
+  display: block;
+  width: var(--reel-art-w);
+  height: var(--reel-art-h);
+}
+
+.reel-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: #e5e5e5;
+  will-change: transform, filter;
+}
+
+/* Corner marks, sitting just outside the picture. */
+.reel-brackets {
+  position: absolute;
+  inset: -0.6rem;
+  opacity: var(--meta, 0);
+  pointer-events: none;
+}
+
+.reel-brackets span {
+  position: absolute;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--color-foreground);
+}
+
+.reel-brackets span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.reel-brackets span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.reel-brackets span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.reel-brackets span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+.reel-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: center;
+  opacity: var(--meta, 0);
+  pointer-events: none;
+}
+
+.reel-meta-top {
+  bottom: calc(100% + 1.1rem);
+}
+
+.reel-meta-bottom {
+  top: calc(100% + 1.1rem);
+}
+
+.reel-count,
+.reel-year {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #a3a3a3;
+}
+
+.reel-title,
+.reel-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.reel-sub {
+  color: var(--color-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel {
+    scroll-snap-type: y proximity;
+  }
+}
+
+/* Same pill language as the nav — a live demo deserves to look pressable. */
+.visit-button {
+  display: inline-block;
+  background: var(--color-foreground);
+  color: #fff;
+  padding: 0.45rem 0.7rem;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.visit-button:hover {
+  background: #525252;
+}
+
+/* ------------------------------------------------------ leaving index ---- */
+
+/*
+ * A still of the index, laid over the incoming project page and faded out while
+ * the hero zoom runs beneath it.
+ *
+ * It starts below the nav and sits under it (z 20 against the nav's 30): the
+ * nav is shared by both routes and must stay put, so it is neither cloned nor
+ * covered. The travelling image (z 40) stays above the still.
+ */
+.index-veil {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: var(--color-background);
+}
+
+/* ------------------------------------------------------- project page ---- */
+
+.project-page {
+  min-height: calc(100dvh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+}
+
+.project-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--cols-visible), var(--col-w));
+  column-gap: var(--gap);
+  padding-inline: var(--gutter);
+}
+
+.aside-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid currentColor;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+  transition: background-color 140ms ease, color 140ms ease;
+  transition: color var(--dur) var(--ease);
+}
+
+.aside-back:hover {
+  color: var(--color-foreground);
+}
+
+/*
+ * The left margin holds everything that is not a picture. It is a black slab —
+ * the same one the statement sits in on the index — parked against the middle
+ * of the screen while the pictures go past it. Three columns rather than two:
+ * a paragraph at two is a ribbon.
+ *
+ * The column is the full height of the screen and the slab is centred inside
+ * it, which is how it stays put without a transform fighting the sticky.
+ */
+.project-aside {
+  grid-column: 1 / span 3;
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100dvh - var(--nav-h));
+  display: flex;
+  align-items: center;
+  padding-right: 1.5rem;
+}
+
+.aside-box {
+  width: 100%;
+  /* --hero-h is measured off the picture by ProjectAside; the viewport bound is
+     the fallback for the moment before it lands, and for a very tall image. */
+  max-height: min(
+    var(--hero-h, 60vh),
+    calc(100dvh - var(--nav-h) - 3rem)
+  );
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 1.15rem 1.25rem 1.25rem;
+  background: var(--color-foreground);
+  color: #fff;
+}
+
+.aside-box::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keyed to the dark ground: everything in here assumes paper otherwise. */
+.aside-box .aside-back,
+.aside-box .eyebrow,
+.aside-box .project-blurb,
+.aside-box .section-link,
+.aside-box .aside-details .detail-row dt {
+  color: rgb(255 255 255 / 0.5);
+}
+
+.aside-box .project-title,
+.aside-box .aside-intro,
+.aside-box .detail-row dd {
+  color: #fff;
+}
+
+.aside-box .dimmed {
+  color: rgb(255 255 255 / 0.3);
+}
+
+.aside-box .aside-back {
+  color: #fff;
+}
+
+.aside-box .aside-back:hover {
+  background: #fff;
+  color: var(--color-foreground);
+}
+
+.aside-box .section-link:hover,
+.aside-box .section-link[aria-current="true"] {
+  color: #fff;
+}
+
+.aside-box .aside-index,
+.aside-box .aside-details {
+  border-top-color: rgb(255 255 255 / 0.2);
+}
+
+.aside-box .aside-visit .visit-button {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.project-aside .project-title {
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.project-aside .project-blurb {
+  padding-bottom: 0.7rem;
+}
+
+.aside-intro p {
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* At the foot of the margin, under the spec: the last thing, not an
+   interruption between the paragraph and the index. */
+.aside-visit {
+  padding: 0.9rem 0 0.1rem;
+}
+
+.aside-visit .visit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0;
+  background: none;
+  color: var(--color-foreground);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  border-bottom: 1px solid var(--color-foreground);
+  padding-bottom: 0.15rem;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.aside-visit .visit-button:hover {
+  background: none;
+  opacity: 0.55;
+}
+
+.aside-index {
+  padding-top: 1.4rem;
+  border-top: 1px solid rgb(10 10 10 / 0.1);
+  margin-top: 1.4rem;
+}
+
+/*
+ * Label in the left margin, value beside it, and real air between the two —
+ * four short rows read as a caption, not a table, so the rules that separated
+ * them are gone.
+ */
+.aside-details {
+  max-width: none;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgb(10 10 10 / 0.1);
+  margin-top: 0.9rem;
+}
+
+.aside-details .detail-row {
+  display: grid;
+  grid-template-columns: 3.9rem 1fr;
+  gap: 0.75rem;
+  border-bottom: 0;
+  padding: 0 0 0.45rem;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.aside-details .detail-row:last-child {
+  padding-bottom: 0;
+}
+
+.aside-details .detail-row dt {
+  width: auto;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #a3a3a3;
+}
+
+.project-aside .section-link {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+  transition: color var(--dur) var(--ease);
+}
+
+.project-aside .section-link:hover,
+.project-aside .section-link[aria-current="true"] {
+  color: var(--color-foreground);
+}
+
+.project-aside .dimmed {
+  color: #d4d4d4;
+}
+
+/*
+ * Columns 4 to 9, which puts the pictures dead centre on the page. The margin
+ * column takes 1 to 3 and the map hangs off the right edge, both of which sit
+ * outside this — so the middle reads as the middle.
+ */
+.project-body {
+  grid-column: 4 / span 6;
+  padding-block: 2rem 6rem;
+}
+
+/*
+ * A miniature of the whole project, down the edge of it, with a rectangle
+ * marking what is on screen. Centred rather than stretched nav-to-footer: a
+ * full-height column reads as a scrollbar, and this is a map.
+ *
+ * The miniature is a real scaled copy of the page, so its own styles draw it —
+ * nothing here describes its contents, only the window it sits in.
+ */
+.project-rail {
+  position: fixed;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+  z-index: 15;
+  background: var(--color-background);
+  border: 1px solid rgb(10 10 10 / 0.14);
+  cursor: grab;
+  /* A drag surface, so the browser must not claim the gesture. */
+  touch-action: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 320ms var(--ease);
+}
+
+.project-rail[data-ready] {
+  opacity: 1;
+}
+
+.project-rail[data-scrubbing] {
+  cursor: grabbing;
+}
+
+/* The copy is inert: it is a picture of the page, not a second copy of it. It
+   also does the clipping, so the marker above it is free to overhang. */
+.rail-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/*
+ * Where you are: a little screen-shaped window on the map. Not the true height
+ * of a screenful — on a long project that was a tall column and read as a
+ * second scrollbar. It hangs past both edges so it stays legible against
+ * whatever it is sitting on.
+ */
+.rail-view {
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  /* A screen's proportions, so it reads as "the part you are looking at"
+     rather than as a scrollbar thumb. */
+  aspect-ratio: 16 / 10;
+  transform: translateY(-50%);
+  border: 1px solid var(--color-foreground);
+  background: rgb(255 255 255 / 0.28);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  /* Flush to the screen edge here, so an overhang would push the page sideways. */
+  .rail-view {
+    left: 0;
+    right: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Hard against the edge, and narrow enough to live in the gutter — at any
+     real width it pushed the reading column off centre. */
+  .project-rail {
+    right: 0;
+  }
+
+  .project-body {
+    padding-right: 0.5rem;
+  }
+}
+
+.project-body > section {
+  scroll-margin-top: calc(var(--nav-h) + 1.5rem);
+  padding-bottom: 5rem;
+}
+
+/*
+ * The opening screen: the first picture in the middle of it, and the project's
+ * name in the bottom corner under it. A full screen of its own, so the picture
+ * is centred against the margin column beside it rather than tucked under the
+ * nav.
+ */
+.project-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* A screen of its own only where there is a margin column to centre against. */
+@media (min-width: 768px) {
+  .project-head {
+    min-height: calc(100dvh - var(--nav-h) - 4rem);
+    /* The name sits near the foot of that screen, not five rems above it. */
+    padding-bottom: 2rem;
+  }
+}
+
+.project-headline {
+  padding-top: 1.1rem;
+  text-align: right;
+  font-size: clamp(1.75rem, 3.4vw, 3rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.eyebrow {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #a3a3a3;
+}
+
+.project-title {
+  padding-top: 0.5rem;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.project-blurb {
+  padding-bottom: 1.5rem;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+}
+
+.project-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+/* Absolute by default; the open animation pins it to the viewport in flight. */
+.project-hero-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.prose {
+  padding-top: 1.5rem;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* Markdown output. Text keeps a reading measure; figures take the column. */
+.prose > :not(figure, table) {
+  max-width: 62ch;
+}
+
+.prose p + p {
+  margin-top: 1em;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1em;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li + li {
+  margin-top: 0.35em;
+}
+
+.prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose h3 {
+  padding-top: 1.4em;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.prose h3 + * {
+  margin-top: 0.5em;
+}
+
+.prose table + * {
+  margin-top: 1.25em;
+}
+
+.prose figure {
+  margin: 1.75em 0 2em;
+}
+
+.prose figure img,
+.prose figure video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+}
+
+.prose figcaption {
+  padding-top: 0.6rem;
+  max-width: 62ch;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #8a8a8a;
+}
+
+.prose code {
+  background: #f2f2f2;
+  padding: 0.05em 0.3em;
+}
+
+.prose table {
+  margin-top: 1em;
+  width: 100%;
+  max-width: 52rem;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.prose th,
+.prose td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.4rem 0.6rem 0.4rem 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+}
+
+.section-head {
+  padding-bottom: 1rem;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #a3a3a3;
+}
+
+.gallery {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gallery-plate {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.gallery-plate:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+}
+
+.details {
+  max-width: 46rem;
+}
+
+.detail-row {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.6rem 0;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.detail-row dt {
+  width: 7rem;
+  flex: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+}
+
+.next-link {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 1rem 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: padding-inline var(--dur) var(--ease);
+}
+
+.next-link:hover {
+  padding-inline: 0.5rem;
+}
+
+.next-link .dimmed {
+  flex: 1;
+  font-size: 10px;
+  color: #a3a3a3;
+}
+
+.project-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--rule);
+  padding: 1rem var(--gutter);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a3a3a3;
+}
+
+/*
+ * Everything except the hero itself enters with `rise`, ordered by --rise-step.
+ *
+ * The hero is never wrapped in one of these: `rise` uses a transform, and a
+ * transformed ancestor becomes the containing block for `position: fixed`,
+ * which would strand the in-flight image mid-zoom.
+ */
+.reveal {
+  animation: rise var(--rise-dur) var(--rise-ease) both;
+  animation-delay: calc(var(--rise-delay) + var(--rise-step, 0) * 70ms);
+}
+
+/* Opening from a tile: hold the page back until the image has fully landed. */
+.is-opening {
+  --rise-delay: var(--open-dur);
+}
+
+/* Only the travelling image should be on screen while it travels. */
+.is-opening .project-hero {
+  background: transparent;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .project-aside {
+    grid-column: 1 / -1;
+    position: static;
+    height: auto;
+    display: block;
+    padding-top: 1.5rem;
+    padding-right: 0;
+  }
+
+  .aside-box {
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: none;
+    color: inherit;
+  }
+
+  .aside-box .aside-back,
+  .aside-box .eyebrow,
+  .aside-box .project-blurb,
+  .aside-box .section-link,
+  .aside-box .aside-details .detail-row dt {
+    color: #a3a3a3;
+  }
+
+  .aside-box .project-title,
+  .aside-box .aside-intro,
+  .aside-box .detail-row dd {
+    color: var(--color-foreground);
+  }
+
+  .aside-box .dimmed {
+    color: #d4d4d4;
+  }
+
+  .aside-box .aside-index,
+  .aside-box .aside-details {
+    border-top-color: rgb(10 10 10 / 0.1);
+  }
+
+  .aside-box .aside-visit .visit-button {
+    color: var(--color-foreground);
+    border-bottom-color: var(--color-foreground);
+  }
+  .project-aside ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+  }
+  .project-body {
+    grid-column: 1 / -1;
+    padding-top: 1.5rem;
+  }
+  .gallery {
+    grid-template-columns: 1fr;
+  }
+  .gallery-plate:first-child {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+  .next-link {
+    transition: none;
+  }
 }

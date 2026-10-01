@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Next.js static export
+/out/
+
+# Compiled from content/ by scripts/build-content.mjs
+/src/data/projects.generated.ts
+/public/work/*
+!/public/work/.gitkeep
