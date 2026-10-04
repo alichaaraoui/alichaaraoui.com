@@ -78,7 +78,14 @@ export function ProjectAside({
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(hero);
-    return () => ro.disconnect();
+    /* The observer alone is not enough: a window resize changes the picture's
+       height through the grid, and a measurement left over from the old width
+       caps this box at the wrong number. */
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   return (
