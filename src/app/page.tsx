@@ -2,7 +2,14 @@
 
 import { useMemo } from "react";
 import { Footer } from "@/components/Footer";
-import { Empty, GridView, IndexView, ListView, MoodView } from "@/components/views";
+import {
+  Empty,
+  GridView,
+  IndexView,
+  ListView,
+  MoodView,
+  ReelView,
+} from "@/components/views";
 import { useIsPhone } from "@/lib/useIsPhone";
 import { useRoute } from "@/lib/useRoute";
 import { projects } from "@/data/projects";
@@ -29,6 +36,7 @@ export default function Home() {
             {!phone && view === "index" && <IndexView projects={visible} />}
             {!phone && view === "list" && <ListView projects={visible} />}
             {!phone && view === "mood" && <MoodView projects={visible} />}
+            {!phone && view === "reel" && <ReelView projects={visible} />}
           </>
         )}
       </main>

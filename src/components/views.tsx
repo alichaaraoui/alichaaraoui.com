@@ -5,6 +5,7 @@ import { Art } from "./Art";
 import { GridMarkers } from "./GridMarkers";
 import { NoteBody } from "./NoteTile";
 import { StatementCard } from "./StatementCard";
+import { DeskReel } from "./DeskReel";
 import { PhoneReel } from "./PhoneReel";
 import { PillButton } from "./Pill";
 import { ProjectTile } from "./ProjectTile";
@@ -109,6 +110,14 @@ function DesktopStrip({ projects }: { projects: Project[] }) {
       </div>
     </div>
   );
+}
+
+/**
+ * The phone's depth reel, turned on its side. Desktop only — the page sends a
+ * phone to the grid whatever the hash says, and the grid is the reel there.
+ */
+export function ReelView({ projects }: { projects: Project[] }) {
+  return <DeskReel projects={projects} />;
 }
 
 /** A numbered table of contents. No images. */

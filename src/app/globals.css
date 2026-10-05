@@ -354,7 +354,7 @@ html {
    * top of ABOUT.
    */
   .nav-views {
-    grid-column: 4 / span 4;
+    grid-column: 4 / span 5;
     grid-row: 1;
   }
   .nav-about {
@@ -866,6 +866,106 @@ html {
     padding-top: 0.5rem;
     opacity: 1;
     text-align: left;
+  }
+}
+
+/* ------------------------------------------------------- desktop reel ---- */
+
+/*
+ * The phone reel on its side. Nothing here is laid out in flow: the stage is a
+ * single point in the middle of the screen and DeskReel places every project
+ * around it by transform, so the browser never reflows while the reel moves.
+ */
+.dreel {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.dreel:active {
+  cursor: grabbing;
+}
+
+.dreel-stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* Anchored to the middle; the transform carries it left or right from there. */
+.dreel-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  margin-left: calc(var(--dreel-w) / -2);
+  width: var(--dreel-w);
+  will-change: transform, opacity;
+}
+
+.dreel-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #f1f1f1;
+}
+
+.dreel-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  will-change: transform, filter;
+}
+
+/* Only whatever is in the middle carries its caption; --meta fades the rest. */
+.dreel-meta {
+  display: block;
+  padding-top: 0.9rem;
+  opacity: var(--meta, 0);
+  transition: opacity 180ms var(--ease);
+  text-align: center;
+  pointer-events: none;
+}
+
+.dreel-count,
+.dreel-title,
+.dreel-sub {
+  display: block;
+}
+
+.dreel-count {
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  color: #a3a3a3;
+}
+
+.dreel-title {
+  padding-top: 0.35rem;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.dreel-sub {
+  padding-top: 0.2rem;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #a3a3a3;
+}
+
+:root {
+  /* How wide the focused picture is. Everything else is a fraction of it. */
+  --dreel-w: clamp(17rem, 30vw, 30rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dreel-meta {
+    transition: none;
   }
 }
 
