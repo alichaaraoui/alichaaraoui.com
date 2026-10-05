@@ -15,6 +15,10 @@ collaborators: Harsh Makadia, Jay Anupoju, Akshaya Monimaran, Advika Kandikonda
 **A small advisory practice keeps its books in a filing cabinet and a
 spreadsheet.** Otter does it instead, and shows its working.
 
+## Signing up
+
+![the landing page, and the way in](08-signup.png)
+
 ## Reading a document
 
 ![an invoice read, classified and turned into fields](03-intake.mp4)
