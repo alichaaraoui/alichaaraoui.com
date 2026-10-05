@@ -1495,10 +1495,23 @@ html {
   color: #a3a3a3;
 }
 
+/*
+ * The opening picture keeps its own proportions. It used to be pinned at 16:9
+ * and filled with object-fit: cover, which quietly cropped every project whose
+ * hero was not 16:9 — a portrait render lost most of itself that way.
+ *
+ * The height cap is applied through max-width rather than max-height: capping
+ * the height directly would break the aspect and bring the cropping back, so
+ * instead a tall picture is allowed to narrow and sit centred.
+ */
 .project-hero {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  max-width: calc(
+    (100dvh - var(--nav-h) - 9rem) * var(--hero-ar, 1.778)
+  );
+  margin-inline: auto;
+  aspect-ratio: var(--hero-ar, 16 / 9);
   overflow: hidden;
   background: #f5f5f5;
 }

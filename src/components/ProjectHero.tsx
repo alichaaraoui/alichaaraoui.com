@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, type CSSProperties } from "react";
 import { Art } from "./Art";
 import {
   claim,
@@ -89,7 +89,13 @@ export function ProjectHero({ project }: { project: Project }) {
   }, [project.slug]);
 
   return (
-    <div ref={holder} className="project-hero">
+    <div
+      ref={holder}
+      className="project-hero"
+      /* The box takes the picture's own proportions. A fixed 16:9 frame cropped
+         every hero that was not 16:9 — which was all but one of them. */
+      style={{ "--hero-ar": project.ratio } as CSSProperties}
+    >
       <div ref={art} className="project-hero-art">
         <Art
           img={project.hero}
