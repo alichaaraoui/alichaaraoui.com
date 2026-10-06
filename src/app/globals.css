@@ -886,6 +886,10 @@ html {
 .dreel {
   position: relative;
   height: 100%;
+  /* The one dark room on the site. Panels read as lit objects against it, and
+     the depth the spiral is doing has somewhere to disappear into. */
+  background: #090909;
+  color: #fff;
 }
 
 .dreel-side {
@@ -898,12 +902,19 @@ html {
   pointer-events: none;
 }
 
-/* The statement stays readable over whatever passes behind it. */
+/* Keyed to the dark room, and haloed so it stays readable over whatever
+   happens to drift behind it. */
 .dreel-side .note-lead,
 .dreel-side .note-line {
+  color: #fff;
   text-shadow:
-    0 0 14px var(--color-background),
-    0 0 28px var(--color-background);
+    0 0 16px #090909,
+    0 0 32px #090909;
+}
+
+.dreel-side .note-em {
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.14);
 }
 
 .dreel-intro .note-body + .note-body {
@@ -967,7 +978,7 @@ html {
   display: block;
   width: 100%;
   aspect-ratio: 3 / 2;
-  background: #f1f1f1;
+  background: #141414;
 }
 
 .dreel-art {
@@ -990,7 +1001,7 @@ html {
   position: absolute;
   width: 0.9rem;
   height: 0.9rem;
-  border: 1px solid var(--color-foreground);
+  border: 1px solid rgb(255 255 255 / 0.55);
 }
 
 .dreel-brackets span:nth-child(1) {
@@ -1036,7 +1047,7 @@ html {
 .dreel-count {
   font-size: 9px;
   letter-spacing: 0.11em;
-  color: #a3a3a3;
+  color: rgb(255 255 255 / 0.45);
 }
 
 .dreel-title {
@@ -1050,7 +1061,7 @@ html {
   padding-top: 0.25rem;
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: #a3a3a3;
+  color: rgb(255 255 255 / 0.5);
 }
 
 /* --------------------------------------------------------- phone reel ---- */

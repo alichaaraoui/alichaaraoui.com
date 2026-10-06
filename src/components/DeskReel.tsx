@@ -37,6 +37,15 @@ const RECEDE = 100; // px further into the screen per step back
    something in the far distance rather than an abrupt end to the spiral. */
 const REPEATS = 2;
 
+/* The spiral never rests. A step takes about eight seconds at 60fps, slow
+   enough to read as drift rather than as a carousel advancing. */
+const DRIFT = 0.0021;
+
+/* A fixed, repeatable wobble per panel, so the band looks scattered rather than
+   threaded on a wire. Deterministic, so it cannot differ between the server
+   render and the browser. */
+const wobble = (i: number) => Math.sin(i * 12.9898) * 0.5 + 0.5;
+
 /* The focused picture is sized off the rail's HEIGHT, not its column width: at
    full column width it ate the rail and left the spiral nowhere to turn. */
 const FRAME = 0.44; // focused picture height, as a fraction of the rail
@@ -71,7 +80,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
   const target = useRef(0);
   const vel = useRef(0);
   const frame = useRef(0);
-  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
   const { hash } = useRoute();
   const total = projects.length;
 
@@ -131,16 +140,21 @@ export function DeskReel({ projects }: { projects: Project[] }) {
          keeps winding — far enough back a picture has turned a full circle and
          faces the camera again at nearly full width, which reads as the spiral
          coming apart rather than receding. */
+      const w = wobble(i) - 0.5;
       node.style.transform =
         `translate3d(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px), ${z.toFixed(2)}px)` +
-        ` rotateY(${(-angle * TILT * taper).toFixed(4)}rad) scale(${taper.toFixed(4)})`;
+        ` rotateY(${(-angle * TILT * taper + w * 0.5).toFixed(4)}rad)` +
+        ` rotateX(${(w * 0.3).toFixed(4)}rad)` +
+        ` rotateZ(${(w * 0.16).toFixed(4)}rad)` +
+        ` scale(${taper.toFixed(4)})`;
       /* Thins out over the whole visible run rather than falling away in the
          first couple of steps — the far end should fade, not switch off. */
       node.style.opacity = clamp01(1 - away / (visible + 2.5)).toFixed(3);
 
       const picture = node.querySelector<HTMLElement>(".dreel-art");
       if (picture) {
-        picture.style.filter = `blur(${Math.min(6, 0.85 * away).toFixed(2)}px) grayscale(${clamp01(0.42 * away).toFixed(2)})`;
+        // Depth is distance and softness here, not drained colour.
+        picture.style.filter = `blur(${Math.min(5, 0.6 * away).toFixed(2)}px)`;
       }
 
       /* The caption and the brackets belong to whatever is at the front, and
@@ -149,19 +163,19 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     });
   }, [total]);
 
-  /** Carry the focus toward the target on a spring, one frame at a time. */
+  /*
+   * Carry the focus toward the target on a spring, and move the target on by a
+   * hair every frame. The loop never ends — the spiral is always turning, and a
+   * wheel or a drag just shoves it along faster.
+   */
   const run = useCallback(() => {
+    /* Something that moves forever and was never asked to is exactly what the
+       reduced-motion preference is about, so the drift stops for it. The reel
+       still answers a wheel or a drag. */
+    if (!held.current && !prefersReducedMotion()) target.current += DRIFT;
     const gap = target.current - focus.current;
     vel.current = (vel.current + gap * STIFF) * DAMP;
     focus.current += vel.current;
-
-    if (Math.abs(gap) < REST && Math.abs(vel.current) < REST) {
-      focus.current = target.current;
-      vel.current = 0;
-      frame.current = 0;
-      paint();
-      return;
-    }
     paint();
     frame.current = requestAnimationFrame(run);
   }, [paint]);
@@ -170,24 +184,15 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     if (!frame.current) frame.current = requestAnimationFrame(run);
   }, [run]);
 
+  /* No snapping: the spiral is never meant to come to rest on a project. */
   const nudge = useCallback(
-    (by: number, snap = true) => {
+    (by: number) => {
       target.current += by;
       if (prefersReducedMotion()) {
         focus.current = target.current;
         vel.current = 0;
       }
       start();
-
-      /* Come to rest on a project rather than between two. The timer restarts
-         on every wheel tick, so the snap happens once the hand stops. */
-      if (settle.current) clearTimeout(settle.current);
-      if (snap) {
-        settle.current = setTimeout(() => {
-          target.current = Math.round(target.current);
-          start();
-        }, 120);
-      }
     },
     [start],
   );
@@ -202,7 +207,11 @@ export function DeskReel({ projects }: { projects: Project[] }) {
   );
 
   useEffect(() => {
+    /* Lay the spiral out once up front, then hand it to the loop. Leaving the
+       first placement to the loop means a tab that is not being painted shows
+       every panel stacked at the centre until it is looked at. */
     paint();
+    start();
     const onResize = () => paint();
     window.addEventListener("resize", onResize);
     const onKey = (e: KeyboardEvent) => {
@@ -214,9 +223,8 @@ export function DeskReel({ projects }: { projects: Project[] }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
       if (frame.current) cancelAnimationFrame(frame.current);
-      if (settle.current) clearTimeout(settle.current);
     };
-  }, [paint, nudge]);
+  }, [paint, nudge, start]);
 
   /** Dragging the reel, for anyone without a wheel. */
   const drag = useRef<{ y: number; from: number } | null>(null);
@@ -240,6 +248,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
         onWheel={onWheel}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
+          held.current = true;
           drag.current = { y: e.clientY, from: target.current };
         }}
         onPointerMove={(e) => {
@@ -250,10 +259,11 @@ export function DeskReel({ projects }: { projects: Project[] }) {
           start();
         }}
         onPointerUp={() => {
-          if (drag.current) nudge(0);
+          held.current = false;
           drag.current = null;
         }}
         onPointerCancel={() => {
+          held.current = false;
           drag.current = null;
         }}
       >
