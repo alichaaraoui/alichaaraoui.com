@@ -26,7 +26,7 @@ const DEPTH = 1150; // perspective distance in px — lower is a wider-angle len
 
 /* The focused picture is sized off the rail's HEIGHT, not its column width: at
    full column width it ate the rail and left the spiral nowhere to turn. */
-const FRAME = 0.34; // focused picture height, as a fraction of the rail
+const FRAME = 0.44; // focused picture height, as a fraction of the rail
 const FRAME_AR = 1.5;
 
 /* A critically damped spring. A linear chase crawls the last few pixels and
@@ -68,7 +68,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     const height = el.clientHeight;
     const at = focus.current;
 
-    const frameW = Math.min(el.clientWidth * 0.78, height * FRAME * FRAME_AR);
+    const frameW = Math.min(el.clientWidth * 0.42, height * FRAME * FRAME_AR);
     el.style.setProperty("--dreel-w", `${frameW.toFixed(1)}px`);
     el.style.setProperty("--dreel-depth", `${DEPTH}px`);
 

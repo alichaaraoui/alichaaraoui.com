@@ -877,19 +877,33 @@ html {
  * of its column and DeskReel places every project around it by transform, so
  * the browser never reflows while the reel moves.
  */
+/*
+ * The spiral is the page: the rail fills it edge to edge and the helix turns
+ * about its centre. The writing floats over the left of it rather than taking
+ * a column of its own — penning the spiral into half the width was what left
+ * it looking small and clipped.
+ */
 .dreel {
+  position: relative;
   height: 100%;
-  display: grid;
-  grid-template-columns: repeat(var(--cols-visible), var(--col-w));
-  column-gap: var(--gap);
-  padding-inline: var(--gutter);
 }
 
-/* The written half: columns 1 to 5, held against the middle of the screen. */
 .dreel-side {
-  grid-column: 1 / span 5;
-  align-self: center;
-  padding-bottom: 2rem;
+  position: absolute;
+  left: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: min(23rem, 26vw);
+  pointer-events: none;
+}
+
+/* The statement stays readable over whatever passes behind it. */
+.dreel-side .note-lead,
+.dreel-side .note-line {
+  text-shadow:
+    0 0 14px var(--color-background),
+    0 0 28px var(--color-background);
 }
 
 .dreel-intro .note-body + .note-body {
@@ -909,16 +923,16 @@ html {
 }
 
 /*
- * The spiral: columns 8 to 12. The rail supplies the lens, the drum supplies
- * the 3D space, and DeskReel places every project on a helix inside it. The
- * browser depth-sorts the drum's children itself, which is why nothing here
- * sets a z-index.
+ * The rail supplies the lens, the drum supplies the 3D space, and DeskReel
+ * places every project on a helix inside it. The browser depth-sorts the drum's
+ * children itself, which is why nothing here sets a z-index.
+ *
+ * Deliberately not clipped: the spiral is allowed to run to the edges of the
+ * screen, and the screen is the only thing that cuts it off.
  */
 .dreel-rail {
-  position: relative;
-  grid-column: 8 / span 5;
-  height: 100%;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
   perspective: var(--dreel-depth, 1150px);
   perspective-origin: 50% 50%;
   cursor: grab;
