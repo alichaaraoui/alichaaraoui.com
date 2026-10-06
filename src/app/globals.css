@@ -928,9 +928,17 @@ html {
 }
 
 .dreel-plate {
-  padding-top: 2rem;
+  padding-top: 1.75rem;
   display: grid;
   gap: 0.5rem;
+}
+
+/* Mini me. Inverted, because the only dark room on the site is this one. */
+.dreel-plate img {
+  width: 100%;
+  height: auto;
+  filter: invert(1);
+  opacity: 0.85;
 }
 
 /*
@@ -973,60 +981,35 @@ html {
   will-change: transform, opacity;
 }
 
+/*
+ * A panel is not one flat card but a row of vertical strips, each turned a
+ * little further than the last, so the sheet bows in the air. A single element
+ * cannot be bent in 3D, and a filter or an overflow on this would flatten the
+ * strips' own 3D — which is why there is neither.
+ */
 .dreel-frame {
   position: relative;
-  display: block;
+  display: flex;
   width: 100%;
   aspect-ratio: 3 / 2;
-  background: #141414;
+  transform-style: preserve-3d;
 }
 
-.dreel-art {
-  position: absolute;
-  inset: 0;
-  display: block;
-  overflow: hidden;
-  will-change: filter;
+.dreel-slice {
+  flex: 1 1 0;
+  background-image: var(--src);
+  background-size: calc(var(--n) * 100%) 100%;
+  background-position: calc(var(--k) / (var(--n) - 1) * 100%) 50%;
+  background-repeat: no-repeat;
+  background-color: #141414;
+  /* Half a pixel of overlap, or the seams show as hairlines. */
+  margin-inline: -0.5px;
+  transform: rotateY(calc((var(--k) - (var(--n) - 1) / 2) * var(--bend)));
 }
 
-/* The frame. Four corner brackets, on whatever is in the middle. */
-.dreel-brackets {
-  position: absolute;
-  inset: -0.7rem;
-  opacity: var(--meta, 0);
-  pointer-events: none;
-}
-
-.dreel-brackets span {
-  position: absolute;
-  width: 0.9rem;
-  height: 0.9rem;
-  border: 1px solid rgb(255 255 255 / 0.55);
-}
-
-.dreel-brackets span:nth-child(1) {
-  top: 0;
-  left: 0;
-  border-right: 0;
-  border-bottom: 0;
-}
-.dreel-brackets span:nth-child(2) {
-  top: 0;
-  right: 0;
-  border-left: 0;
-  border-bottom: 0;
-}
-.dreel-brackets span:nth-child(3) {
-  bottom: 0;
-  left: 0;
-  border-right: 0;
-  border-top: 0;
-}
-.dreel-brackets span:nth-child(4) {
-  bottom: 0;
-  right: 0;
-  border-left: 0;
-  border-top: 0;
+/* A project with no picture shows its tone instead of nine identical plates. */
+.dreel-plain .dreel-slice {
+  background-color: transparent;
 }
 
 /* Only whatever is in the middle carries its caption. */
@@ -2009,4 +1992,37 @@ html {
   .next-link {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------- résumé ---- */
+
+/*
+ * The sheet and one link. It is an image, not an embedded PDF: browsers wrap an
+ * embedded one in a reader — toolbar, thumbnail rail, zoom box — and that
+ * furniture is the opposite of what this page is for.
+ */
+.resume-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 3rem var(--gutter) 4rem;
+}
+
+.resume-sheet {
+  width: min(820px, 100%);
+  height: auto;
+  border: 1px solid rgb(10 10 10 / 0.1);
+}
+
+.resume-get {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #a3a3a3;
+  transition: color var(--dur) var(--ease);
+}
+
+.resume-get:hover {
+  color: var(--color-foreground);
 }

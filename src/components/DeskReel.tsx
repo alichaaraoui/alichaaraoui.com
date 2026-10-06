@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { WheelEvent as ReactWheelEvent } from "react";
+import type { CSSProperties, WheelEvent as ReactWheelEvent } from "react";
 import Link from "next/link";
-import { Art } from "./Art";
 import { NoteBody } from "./NoteTile";
 import { play } from "@/lib/audio";
 import { handOver, prefersReducedMotion, veilIndex } from "@/lib/transition";
@@ -14,41 +13,56 @@ import { notes, type Project } from "@/data/projects";
 const STEP = 190;
 
 /*
- * Shape of the helix. Projects sit on a cylinder that climbs as it turns, so
- * stepping through the list both rotates the drum and rises along it — the
- * combination is what reads as a spiral rather than a carousel or a stack.
+ * Shape of the spiral, taken off the reference frame by frame rather than
+ * guessed: the pictures are wound round an axis pointing INTO the screen, so
+ * each step turns a little further round the ring, drifts outward from the
+ * middle and drops further back. Perspective then pulls the far ones in toward
+ * a vanishing point and shrinks them, which is what gives the spiral no end.
+ *
+ * The earlier version laid them along a band on a sphere. Nothing about that
+ * can work: the climb and the turn pull against each other, and across a search
+ * of the whole constant space there is no setting that clears nine pictures
+ * inside a laptop screen.
  */
-const ARC = 0.62; // radians of turn per project
-const RISE = 0.34; // climb per project, as a fraction of the picture's height
-const RADIUS = 0.85; // widest radius, as a fraction of the picture's width
-const TILT = 0.55; // how much each picture turns with the drum; 1 is fully tangent
-const DEPTH = 1150; // perspective distance in px — lower is a wider-angle lens
+const TURN = 0.85; // radians round the ring per project — ~1.3 turns on screen
+/* The ring has to be wide enough that neighbours clear each other round it:
+   the chord between two of them is 2·RHO0·sin(TURN/2) picture widths, and that
+   has to beat one whole picture. It is why the pictures are smaller here than
+   in the reference — at the reference's size they cannot help but collide. */
+const RHO0 = 1.75; // ring radius at the front, in picture widths
+const GROW = 0.02; // how much the ring opens out per project
+const PITCH = 0.85; // how far back each project drops, in picture widths
+const DEPTH = 1100; // perspective distance in px — lower is a wider-angle lens
+const NEAR = 0.9; // projects drawn in FRONT of the focused one
+const FAR = 9; // and behind it, by which point they are nearly dark
 
-/*
- * A cylinder closes on itself: turn far enough and the projects come back round
- * to the front, which stops the spiral ever feeling deep. So the helix tapers
- * instead — each step a little smaller and a little further back, converging on
- * a vanishing point it never reaches.
- */
-const TAPER = 0.84; // how much the radius and the climb shrink per step back
-const RECEDE = 100; // px further into the screen per step back
+/* Each panel is built from this many vertical strips, each turned a little
+   further than the last, so it reads as a sheet of paper bowing in the air
+   rather than a flat card. CSS cannot bend a single element in 3D; this is the
+   way to fake it. */
+const SLICES = 9;
+const BEND = 2.4; // degrees of turn between neighbouring strips
 
-/* The list is laid round the helix this many times, so there is always
-   something in the far distance rather than an abrupt end to the spiral. */
-const REPEATS = 2;
+/* The list is laid round the spiral this many times. It has to cover NEAR+FAR
+   with room to spare, or the band runs out before it reaches the vanishing
+   point and the spiral visibly ends. */
+const REPEATS = 3;
 
 /* The spiral never rests. A step takes about eight seconds at 60fps, slow
    enough to read as drift rather than as a carousel advancing. */
 const DRIFT = 0.0021;
 
-/* A fixed, repeatable wobble per panel, so the band looks scattered rather than
-   threaded on a wire. Deterministic, so it cannot differ between the server
-   render and the browser. */
+/* A fixed, repeatable nudge per panel, so the ring is not mechanically even.
+   Deterministic, so it cannot differ between the server render and the
+   browser. */
 const wobble = (i: number) => Math.sin(i * 12.9898) * 0.5 + 0.5;
+const WOB = 0.05; // radians of extra turn round the ring
+const SPILL = 0.05; // picture widths of extra radius
+const ROLL = 0.05; // radians of tilt in the picture's own plane
 
 /* The focused picture is sized off the rail's HEIGHT, not its column width: at
    full column width it ate the rail and left the spiral nowhere to turn. */
-const FRAME = 0.44; // focused picture height, as a fraction of the rail
+const FRAME = 0.18;
 const FRAME_AR = 1.5;
 
 /* A critically damped spring. A linear chase crawls the last few pixels and
@@ -105,61 +119,44 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     el.style.setProperty("--dreel-w", `${frameW.toFixed(1)}px`);
     el.style.setProperty("--dreel-depth", `${DEPTH}px`);
 
-    const frameH = frameW / FRAME_AR;
-    const radius = frameW * RADIUS;
-    const rise = frameH * RISE;
     const span = total * REPEATS;
-
-    const visible = Math.min(9, span / 2);
 
     items.current.forEach((node, i) => {
       if (!node) return;
-      /* Distance measured around the whole laid-out ring, so whichever copy of
-         a project is nearest the front is the one drawn. */
+      /* Distance measured round the whole laid-out ring, so whichever copy of a
+         project is nearest the front is the one drawn. The window is lopsided
+         on purpose: a couple of projects stand in front of the focused one, and
+         everything else winds away behind it. */
       let d = (((i - at) % span) + span) % span;
-      if (d > span / 2) d -= span;
-      const away = Math.abs(d);
+      if (d > span - NEAR) d -= span;
 
-      if (away > visible) {
+      if (d > FAR) {
         node.style.opacity = "0";
         node.style.visibility = "hidden";
         return;
       }
       node.style.visibility = "visible";
 
-      const angle = d * ARC;
-      const taper = Math.pow(TAPER, away);
-      const x = radius * taper * Math.sin(angle);
-      /* The climb converges: each step adds less than the one before, so the far
-         end gathers toward a point instead of marching off the screen. */
-      const y = Math.sign(d) * rise * ((1 - taper) / (1 - TAPER));
-      // Straight back, never round to the front again.
-      const z = -away * RECEDE;
-
-      /* Both the turn and the size taper with distance. Without that the angle
-         keeps winding — far enough back a picture has turned a full circle and
-         faces the camera again at nearly full width, which reads as the spiral
-         coming apart rather than receding. */
       const w = wobble(i) - 0.5;
+      const turn = d * TURN + w * WOB;
+      const radius = (RHO0 + d * GROW + w * SPILL) * frameW;
+
+      const x = radius * Math.cos(turn);
+      const y = radius * Math.sin(turn);
+      const z = -d * PITCH * frameW;
+
       node.style.transform =
         `translate3d(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px), ${z.toFixed(2)}px)` +
-        ` rotateY(${(-angle * TILT * taper + w * 0.5).toFixed(4)}rad)` +
-        ` rotateX(${(w * 0.3).toFixed(4)}rad)` +
-        ` rotateZ(${(w * 0.16).toFixed(4)}rad)` +
-        ` scale(${taper.toFixed(4)})`;
-      /* Thins out over the whole visible run rather than falling away in the
-         first couple of steps — the far end should fade, not switch off. */
-      node.style.opacity = clamp01(1 - away / (visible + 2.5)).toFixed(3);
+        ` rotateZ(${(turn * 0.12 + w * 2 * ROLL).toFixed(4)}rad)`;
 
-      const picture = node.querySelector<HTMLElement>(".dreel-art");
-      if (picture) {
-        // Depth is distance and softness here, not drained colour.
-        picture.style.filter = `blur(${Math.min(5, 0.6 * away).toFixed(2)}px)`;
-      }
+      /* Into the dark rather than off a cliff: the spiral has no end, it just
+         stops being lit. */
+      const away = Math.max(0, d) / FAR;
+      node.style.opacity = clamp01(1.02 - Math.pow(away, 1.35)).toFixed(3);
+      node.style.zIndex = String(1000 - Math.round(d * 20));
 
-      /* The caption and the brackets belong to whatever is at the front, and
-         fade faster than the picture so they never double up. */
-      node.style.setProperty("--meta", clamp01(1 - away * 2.6).toFixed(3));
+      /* The caption belongs to whatever is at the front. */
+      node.style.setProperty("--meta", clamp01(1 - Math.abs(d) * 2.6).toFixed(3));
     });
   }, [total]);
 
@@ -222,7 +219,11 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
+      /* Zeroing this matters: start() skips when it is set, so leaving a
+         cancelled id behind means no loop is ever begun again. React's double
+         mount in development hits that on the very first render. */
       if (frame.current) cancelAnimationFrame(frame.current);
+      frame.current = 0;
     };
   }, [paint, nudge, start]);
 
@@ -237,9 +238,10 @@ export function DeskReel({ projects }: { projects: Project[] }) {
             <NoteBody key={n.id} note={n} />
           ))}
         </div>
-        {/* Art goes here. Drop the pieces in as children of .dreel-plate and
-            they will stack under the introduction. */}
-        <div className="dreel-plate" />
+        <div className="dreel-plate">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mini-ali.png" alt="" />
+        </div>
       </div>
 
       <div
@@ -281,7 +283,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
                  only the project already in the middle opens. */
                 const span = total * REPEATS;
                 let d = (((i - focus.current) % span) + span) % span;
-                if (d > span / 2) d -= span;
+                if (d > span - NEAR) d -= span;
                 if (Math.abs(d) > 0.5) {
                   e.preventDefault();
                   play("nav");
@@ -306,22 +308,31 @@ export function DeskReel({ projects }: { projects: Project[] }) {
                 veilIndex(null);
               }}
             >
-              <span className="dreel-frame">
-                <span className="dreel-art">
-                  <Art
-                    img={p.hero}
-                    tone={p.tone}
-                    alt={p.title}
-                    sizes="30vw"
-                    playAbove={520}
+              <span
+                /* Six of the projects have no picture at all. Without this they
+                   all come out as the same dark plate, and the spiral reads as
+                   mostly empty — the tone is the fallback the rest of the site
+                   already uses for them. */
+                className={
+                  p.hero
+                    ? "dreel-frame"
+                    : `dreel-frame dreel-plain bg-gradient-to-br ${p.tone}`
+                }
+                style={
+                  {
+                    "--src": p.hero ? `url(${p.hero.src})` : undefined,
+                    "--n": SLICES,
+                    "--bend": `${BEND}deg`,
+                  } as CSSProperties
+                }
+              >
+                {Array.from({ length: SLICES }, (_, k) => (
+                  <span
+                    key={k}
+                    className="dreel-slice"
+                    style={{ "--k": k } as CSSProperties}
                   />
-                </span>
-                <span className="dreel-brackets" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                </span>
+                ))}
               </span>
               <span className="dreel-meta">
                 <span className="dreel-count">
