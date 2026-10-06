@@ -872,12 +872,46 @@ html {
 /* ------------------------------------------------------- desktop reel ---- */
 
 /*
- * The phone reel on its side. Nothing here is laid out in flow: the stage is a
- * single point in the middle of the screen and DeskReel places every project
- * around it by transform, so the browser never reflows while the reel moves.
+ * The phone reel stood up on the right, with the introduction beside it.
+ * Nothing in the rail is laid out in flow: it is a single point in the middle
+ * of its column and DeskReel places every project around it by transform, so
+ * the browser never reflows while the reel moves.
  */
 .dreel {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--cols-visible), var(--col-w));
+  column-gap: var(--gap);
+  padding-inline: var(--gutter);
+}
+
+/* The written half: columns 1 to 5, held against the middle of the screen. */
+.dreel-side {
+  grid-column: 1 / span 5;
+  align-self: center;
+  padding-bottom: 2rem;
+}
+
+.dreel-intro .note-body + .note-body {
+  margin-top: 1.15rem;
+}
+
+/* Where the art goes. Collapsed until there is something in it, so an empty
+   slot never shows as a hole in the page. */
+.dreel-plate:empty {
+  display: none;
+}
+
+.dreel-plate {
+  padding-top: 2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* The reel itself: columns 8 to 12. */
+.dreel-rail {
   position: relative;
+  grid-column: 8 / span 5;
   height: 100%;
   overflow: hidden;
   cursor: grab;
@@ -885,23 +919,18 @@ html {
   user-select: none;
 }
 
-.dreel:active {
+.dreel-rail:active {
   cursor: grabbing;
 }
 
-.dreel-stage {
-  position: absolute;
-  inset: 0;
-}
-
-/* Anchored to the middle; the transform carries it left or right from there. */
+/* Anchored to the middle of the rail; the transform carries it up or down. */
 .dreel-item {
   position: absolute;
   top: 50%;
   left: 50%;
   display: block;
-  margin-left: calc(var(--dreel-w) / -2);
-  width: var(--dreel-w);
+  /* Set by DeskReel from the rail's height; the column width is only a cap. */
+  width: var(--dreel-w, 100%);
   will-change: transform, opacity;
 }
 
@@ -910,7 +939,6 @@ html {
   display: block;
   width: 100%;
   aspect-ratio: 3 / 2;
-  overflow: hidden;
   background: #f1f1f1;
 }
 
@@ -922,12 +950,51 @@ html {
   will-change: transform, filter;
 }
 
-/* Only whatever is in the middle carries its caption; --meta fades the rest. */
+/* The frame. Four corner brackets, on whatever is in the middle. */
+.dreel-brackets {
+  position: absolute;
+  inset: -0.7rem;
+  opacity: var(--meta, 0);
+  pointer-events: none;
+}
+
+.dreel-brackets span {
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1px solid var(--color-foreground);
+}
+
+.dreel-brackets span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.dreel-brackets span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.dreel-brackets span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.dreel-brackets span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* Only whatever is in the middle carries its caption. */
 .dreel-meta {
   display: block;
-  padding-top: 0.9rem;
+  padding-top: 1.4rem;
   opacity: var(--meta, 0);
-  transition: opacity 180ms var(--ease);
   text-align: center;
   pointer-events: none;
 }
@@ -945,28 +1012,17 @@ html {
 }
 
 .dreel-title {
-  padding-top: 0.35rem;
-  font-size: 12px;
+  padding-top: 0.4rem;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
 
 .dreel-sub {
-  padding-top: 0.2rem;
+  padding-top: 0.25rem;
   font-size: 10px;
   letter-spacing: 0.04em;
   color: #a3a3a3;
-}
-
-:root {
-  /* How wide the focused picture is. Everything else is a fraction of it. */
-  --dreel-w: clamp(17rem, 30vw, 30rem);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dreel-meta {
-    transition: none;
-  }
 }
 
 /* --------------------------------------------------------- phone reel ---- */
