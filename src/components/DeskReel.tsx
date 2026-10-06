@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WheelEvent as ReactWheelEvent } from "react";
 import Link from "next/link";
 import { Art } from "./Art";
@@ -19,10 +19,23 @@ const STEP = 190;
  * combination is what reads as a spiral rather than a carousel or a stack.
  */
 const ARC = 0.62; // radians of turn per project
-const RISE = 0.3; // climb per project, as a fraction of the picture's height
-const RADIUS = 0.85; // cylinder radius, as a fraction of the picture's width
+const RISE = 0.34; // climb per project, as a fraction of the picture's height
+const RADIUS = 0.85; // widest radius, as a fraction of the picture's width
 const TILT = 0.55; // how much each picture turns with the drum; 1 is fully tangent
 const DEPTH = 1150; // perspective distance in px — lower is a wider-angle lens
+
+/*
+ * A cylinder closes on itself: turn far enough and the projects come back round
+ * to the front, which stops the spiral ever feeling deep. So the helix tapers
+ * instead — each step a little smaller and a little further back, converging on
+ * a vanishing point it never reaches.
+ */
+const TAPER = 0.84; // how much the radius and the climb shrink per step back
+const RECEDE = 100; // px further into the screen per step back
+
+/* The list is laid round the helix this many times, so there is always
+   something in the far distance rather than an abrupt end to the spiral. */
+const REPEATS = 2;
 
 /* The focused picture is sized off the rail's HEIGHT, not its column width: at
    full column width it ate the rail and left the spiral nowhere to turn. */
@@ -62,6 +75,17 @@ export function DeskReel({ projects }: { projects: Project[] }) {
   const { hash } = useRoute();
   const total = projects.length;
 
+  /* The same projects laid round the helix REPEATS times. One pass round and
+     the spiral simply stops; two and there is always something further back. */
+  const ring = useMemo(
+    () =>
+      Array.from({ length: total * REPEATS }, (_, k) => ({
+        p: projects[k % total],
+        key: `${projects[k % total].slug}-${Math.floor(k / total)}`,
+      })),
+    [projects, total]
+  );
+
   const paint = useCallback(() => {
     const el = rail.current;
     if (!el) return;
@@ -75,17 +99,16 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     const frameH = frameW / FRAME_AR;
     const radius = frameW * RADIUS;
     const rise = frameH * RISE;
+    const span = total * REPEATS;
 
-    /* How far round the helix is worth drawing. Past this the pictures are
-       edge-on and behind the ones in front of them, so they only cost paint. */
-    const visible = Math.min(4.5, total / 2);
+    const visible = Math.min(9, span / 2);
 
     items.current.forEach((node, i) => {
       if (!node) return;
-      /* Distance around a circle rather than along a line: the helix closes on
-         itself, so the list wraps instead of running out. */
-      let d = (((i - at) % total) + total) % total;
-      if (d > total / 2) d -= total;
+      /* Distance measured around the whole laid-out ring, so whichever copy of
+         a project is nearest the front is the one drawn. */
+      let d = (((i - at) % span) + span) % span;
+      if (d > span / 2) d -= span;
       const away = Math.abs(d);
 
       if (away > visible) {
@@ -96,21 +119,30 @@ export function DeskReel({ projects }: { projects: Project[] }) {
       node.style.visibility = "visible";
 
       const angle = d * ARC;
-      const x = radius * Math.sin(angle);
-      /* Measured from the front of the drum, so the focused picture sits at
-         zero and everything else falls away behind it. */
-      const z = radius * Math.cos(angle) - radius;
-      const y = d * rise;
+      const taper = Math.pow(TAPER, away);
+      const x = radius * taper * Math.sin(angle);
+      /* The climb converges: each step adds less than the one before, so the far
+         end gathers toward a point instead of marching off the screen. */
+      const y = Math.sign(d) * rise * ((1 - taper) / (1 - TAPER));
+      // Straight back, never round to the front again.
+      const z = -away * RECEDE;
 
+      /* Both the turn and the size taper with distance. Without that the angle
+         keeps winding — far enough back a picture has turned a full circle and
+         faces the camera again at nearly full width, which reads as the spiral
+         coming apart rather than receding. */
       node.style.transform =
         `translate3d(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px), ${z.toFixed(2)}px)` +
-        ` rotateY(${(-angle * TILT).toFixed(4)}rad)`;
-      node.style.opacity = clamp01(1 / (1 + 0.42 * away)).toFixed(3);
+        ` rotateY(${(-angle * TILT * taper).toFixed(4)}rad) scale(${taper.toFixed(4)})`;
+      /* Thins out over the whole visible run rather than falling away in the
+         first couple of steps — the far end should fade, not switch off. */
+      node.style.opacity = clamp01(1 - away / (visible + 2.5)).toFixed(3);
 
       const picture = node.querySelector<HTMLElement>(".dreel-art");
       if (picture) {
-        picture.style.filter = `blur(${Math.min(5, 1.9 * away).toFixed(2)}px) grayscale(${clamp01(0.75 * away).toFixed(2)})`;
+        picture.style.filter = `blur(${Math.min(6, 0.85 * away).toFixed(2)}px) grayscale(${clamp01(0.42 * away).toFixed(2)})`;
       }
+
       /* The caption and the brackets belong to whatever is at the front, and
          fade faster than the picture so they never double up. */
       node.style.setProperty("--meta", clamp01(1 - away * 2.6).toFixed(3));
@@ -226,9 +258,9 @@ export function DeskReel({ projects }: { projects: Project[] }) {
         }}
       >
         <div className="dreel-drum">
-          {projects.map((p, i) => (
+          {ring.map(({ p, key }, i) => (
             <Link
-              key={p.slug}
+              key={key}
               href={`/work/${p.slug}/${hash}`}
               className="dreel-item"
               ref={(el) => {
@@ -237,8 +269,9 @@ export function DeskReel({ projects }: { projects: Project[] }) {
               onClick={(e) => {
                 /* Clicking something off to the side brings it to the middle;
                  only the project already in the middle opens. */
-                let d = (((i - focus.current) % total) + total) % total;
-                if (d > total / 2) d -= total;
+                const span = total * REPEATS;
+                let d = (((i - focus.current) % span) + span) % span;
+                if (d > span / 2) d -= span;
                 if (Math.abs(d) > 0.5) {
                   e.preventDefault();
                   play("nav");
