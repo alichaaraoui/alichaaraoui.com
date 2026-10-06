@@ -908,15 +908,28 @@ html {
   gap: 0.5rem;
 }
 
-/* The reel itself: columns 8 to 12. */
+/*
+ * The spiral: columns 8 to 12. The rail supplies the lens, the drum supplies
+ * the 3D space, and DeskReel places every project on a helix inside it. The
+ * browser depth-sorts the drum's children itself, which is why nothing here
+ * sets a z-index.
+ */
 .dreel-rail {
   position: relative;
   grid-column: 8 / span 5;
   height: 100%;
   overflow: hidden;
+  perspective: var(--dreel-depth, 1150px);
+  perspective-origin: 50% 50%;
   cursor: grab;
   touch-action: none;
   user-select: none;
+}
+
+.dreel-drum {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
 }
 
 .dreel-rail:active {
@@ -931,6 +944,7 @@ html {
   display: block;
   /* Set by DeskReel from the rail's height; the column width is only a cap. */
   width: var(--dreel-w, 100%);
+  transform-style: preserve-3d;
   will-change: transform, opacity;
 }
 
@@ -947,7 +961,7 @@ html {
   inset: 0;
   display: block;
   overflow: hidden;
-  will-change: transform, filter;
+  will-change: filter;
 }
 
 /* The frame. Four corner brackets, on whatever is in the middle. */

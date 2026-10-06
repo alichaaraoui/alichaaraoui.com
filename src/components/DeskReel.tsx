@@ -14,31 +14,28 @@ import { notes, type Project } from "@/data/projects";
 const STEP = 190;
 
 /*
- * Shape of the depth effect, in projects away from the focus.
- *
- * GAP is a dead zone — the first neighbour has to clear the focused picture and
- * its brackets. Everything past it compresses toward the edge, and that
- * compression is what reads as depth; even spacing would just be a list.
+ * Shape of the helix. Projects sit on a cylinder that climbs as it turns, so
+ * stepping through the list both rotates the drum and rises along it — the
+ * combination is what reads as a spiral rather than a carousel or a stack.
  */
-const CLEAR = 30; // room between the focused picture and the next one
-const GAP_CEILING = 0.46; // never push the first neighbour further than this much of the height
-/* The focused picture is sized off the rail's HEIGHT, not its column width: at
-   full column width it ate half the rail and left the neighbours nowhere to go,
-   so the gap hit its ceiling and the caption landed on the next thumbnail. */
-const FRAME = 0.36; // focused picture height, as a fraction of the rail
-const FRAME_AR = 1.5;
-const SPREAD = 0.47; // preferred distance to the furthest item, as a fraction of height
-const COMPRESS = 0.62; // higher packs the far items tighter against the edge
-const EDGE = 28; // keep the furthest thumbnail this far inside the reel
+const ARC = 0.62; // radians of turn per project
+const RISE = 0.3; // climb per project, as a fraction of the picture's height
+const RADIUS = 0.85; // cylinder radius, as a fraction of the picture's width
+const TILT = 0.55; // how much each picture turns with the drum; 1 is fully tangent
+const DEPTH = 1150; // perspective distance in px — lower is a wider-angle lens
 
-/* A critically damped spring. The old linear chase crawled the last few pixels
-   and never quite arrived; this carries speed into the move and settles. */
+/* The focused picture is sized off the rail's HEIGHT, not its column width: at
+   full column width it ate the rail and left the spiral nowhere to turn. */
+const FRAME = 0.34; // focused picture height, as a fraction of the rail
+const FRAME_AR = 1.5;
+
+/* A critically damped spring. A linear chase crawls the last few pixels and
+   never quite arrives; this carries speed into the move and settles. */
 const STIFF = 0.14;
 const DAMP = 0.76;
 const REST = 0.0004;
 
-const falloff = (d: number) => 1 - Math.exp(-COMPRESS * d);
-const scaleAt = (d: number) => 1 / (1 + 1.9 * Math.pow(d, 0.5));
+/* Perspective does the shrinking now, so there is no scale curve to tune. */
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 /**
@@ -71,36 +68,22 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     const height = el.clientHeight;
     const at = focus.current;
 
-    el.style.setProperty(
-      "--dreel-w",
-      `${Math.min(el.clientWidth, height * FRAME * FRAME_AR).toFixed(1)}px`
-    );
+    const frameW = Math.min(el.clientWidth * 0.78, height * FRAME * FRAME_AR);
+    el.style.setProperty("--dreel-w", `${frameW.toFixed(1)}px`);
+    el.style.setProperty("--dreel-depth", `${DEPTH}px`);
 
-    const first = items.current[0];
-    const px = (sel: string) => {
-      const el = first?.querySelector(sel);
-      return el instanceof HTMLElement ? el.offsetHeight : 0;
-    };
-    const artH = px(".dreel-frame") || height * 0.32;
-    const metaH = px(".dreel-meta");
+    const frameH = frameW / FRAME_AR;
+    const radius = frameW * RADIUS;
+    const rise = frameH * RISE;
 
-    /* Half the focused picture, its caption, half the neighbour's own picture
-       at its reduced size, then a margin. Both the caption and the neighbour
-       term are easy to forget, and each one on its own puts the title on top of
-       the next thumbnail. */
-    const gap = Math.min(
-      artH / 2 + metaH + (artH * scaleAt(1)) / 2 + CLEAR,
-      height * GAP_CEILING
-    );
-    const edge = height / 2 - EDGE;
-    const reach = Math.max(gap + 10, Math.min(Math.max(height * SPREAD, gap + 60), edge));
-    const room = reach - gap;
-    const visible = room > 120 ? 4.5 : room > 60 ? 3.5 : 2.5;
+    /* How far round the helix is worth drawing. Past this the pictures are
+       edge-on and behind the ones in front of them, so they only cost paint. */
+    const visible = Math.min(4.5, total / 2);
 
     items.current.forEach((node, i) => {
       if (!node) return;
-      /* Distance around a circle rather than along a line, so the list wraps
-         instead of running out. */
+      /* Distance around a circle rather than along a line: the helix closes on
+         itself, so the list wraps instead of running out. */
       let d = (((i - at) % total) + total) % total;
       if (d > total / 2) d -= total;
       const away = Math.abs(d);
@@ -112,20 +95,24 @@ export function DeskReel({ projects }: { projects: Project[] }) {
       }
       node.style.visibility = "visible";
 
-      const y =
-        Math.sign(d) * (gap * Math.min(away, 1) + room * falloff(Math.max(0, away - 1)));
+      const angle = d * ARC;
+      const x = radius * Math.sin(angle);
+      /* Measured from the front of the drum, so the focused picture sits at
+         zero and everything else falls away behind it. */
+      const z = radius * Math.cos(angle) - radius;
+      const y = d * rise;
 
-      node.style.transform = `translate3d(-50%, calc(-50% + ${y.toFixed(2)}px), 0)`;
-      node.style.opacity = clamp01(1 / (1 + 0.5 * away)).toFixed(3);
-      node.style.zIndex = String(Math.round(100 - away * 10));
+      node.style.transform =
+        `translate3d(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px), ${z.toFixed(2)}px)` +
+        ` rotateY(${(-angle * TILT).toFixed(4)}rad)`;
+      node.style.opacity = clamp01(1 / (1 + 0.42 * away)).toFixed(3);
 
       const picture = node.querySelector<HTMLElement>(".dreel-art");
       if (picture) {
-        picture.style.transform = `scale(${scaleAt(away).toFixed(4)})`;
-        picture.style.filter = `blur(${Math.min(6, 2.4 * away).toFixed(2)}px) grayscale(${clamp01(0.8 * away).toFixed(2)})`;
+        picture.style.filter = `blur(${Math.min(5, 1.9 * away).toFixed(2)}px) grayscale(${clamp01(0.75 * away).toFixed(2)})`;
       }
-      /* The caption and the brackets belong to whatever is in the middle, and
-         fade out faster than the picture does so they never double up. */
+      /* The caption and the brackets belong to whatever is at the front, and
+         fade faster than the picture so they never double up. */
       node.style.setProperty("--meta", clamp01(1 - away * 2.6).toFixed(3));
     });
   }, [total]);
@@ -170,15 +157,16 @@ export function DeskReel({ projects }: { projects: Project[] }) {
         }, 120);
       }
     },
-    [start]
+    [start],
   );
 
   const onWheel = useCallback(
     (e: ReactWheelEvent<HTMLDivElement>) => {
-      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      const delta =
+        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
       nudge(delta / STEP);
     },
-    [nudge]
+    [nudge],
   );
 
   useEffect(() => {
@@ -237,52 +225,72 @@ export function DeskReel({ projects }: { projects: Project[] }) {
           drag.current = null;
         }}
       >
-        {projects.map((p, i) => (
-          <Link
-            key={p.slug}
-            href={`/work/${p.slug}/${hash}`}
-            className="dreel-item"
-            ref={(el) => {
-              items.current[i] = el;
-            }}
-            onClick={(e) => {
-              /* Clicking something off to the side brings it to the middle;
+        <div className="dreel-drum">
+          {projects.map((p, i) => (
+            <Link
+              key={p.slug}
+              href={`/work/${p.slug}/${hash}`}
+              className="dreel-item"
+              ref={(el) => {
+                items.current[i] = el;
+              }}
+              onClick={(e) => {
+                /* Clicking something off to the side brings it to the middle;
                  only the project already in the middle opens. */
-              let d = (((i - focus.current) % total) + total) % total;
-              if (d > total / 2) d -= total;
-              if (Math.abs(d) > 0.5) {
-                e.preventDefault();
-                play("nav");
-                nudge(d);
-                return;
-              }
-              play("project");
-              handOver(p.slug, e.currentTarget.querySelector(".dreel-art") ?? e.currentTarget);
-              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-              if (prefersReducedMotion()) return;
-              veilIndex(null);
-            }}
-          >
-            <span className="dreel-frame">
-              <span className="dreel-art">
-                <Art img={p.hero} tone={p.tone} alt={p.title} sizes="30vw" playAbove={520} />
+                let d = (((i - focus.current) % total) + total) % total;
+                if (d > total / 2) d -= total;
+                if (Math.abs(d) > 0.5) {
+                  e.preventDefault();
+                  play("nav");
+                  nudge(d);
+                  return;
+                }
+                play("project");
+                handOver(
+                  p.slug,
+                  e.currentTarget.querySelector(".dreel-art") ??
+                    e.currentTarget,
+                );
+                if (
+                  e.button !== 0 ||
+                  e.metaKey ||
+                  e.ctrlKey ||
+                  e.shiftKey ||
+                  e.altKey
+                )
+                  return;
+                if (prefersReducedMotion()) return;
+                veilIndex(null);
+              }}
+            >
+              <span className="dreel-frame">
+                <span className="dreel-art">
+                  <Art
+                    img={p.hero}
+                    tone={p.tone}
+                    alt={p.title}
+                    sizes="30vw"
+                    playAbove={520}
+                  />
+                </span>
+                <span className="dreel-brackets" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </span>
               </span>
-              <span className="dreel-brackets" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
+              <span className="dreel-meta">
+                <span className="dreel-count">
+                  {String(i + 1).padStart(2, "0")}/
+                  {String(total).padStart(2, "0")}
+                </span>
+                <span className="dreel-title">{p.title}</span>
+                <span className="dreel-sub">{p.blurb}</span>
               </span>
-            </span>
-            <span className="dreel-meta">
-              <span className="dreel-count">
-                {String(i + 1).padStart(2, "0")}/{String(total).padStart(2, "0")}
-              </span>
-              <span className="dreel-title">{p.title}</span>
-              <span className="dreel-sub">{p.blurb}</span>
-            </span>
-          </Link>
-        ))}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
