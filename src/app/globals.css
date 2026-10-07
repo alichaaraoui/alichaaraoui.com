@@ -1974,3 +1974,67 @@ html {
 .resume-get:hover {
   color: var(--color-foreground);
 }
+
+/* ------------------------------------------------------------- Ali ---- */
+
+/*
+ * The mascot, in the bottom corner of every view. Three drawings of the same
+ * scene stacked on top of each other, one visible at a time; which one is up
+ * to what the page is doing.
+ *
+ * They are stacked rather than swapped so the dissolve has something to
+ * dissolve into, and so none of them has to load at the moment it is first
+ * wanted.
+ */
+.ali {
+  position: fixed;
+  left: calc(var(--gutter) - 1rem);
+  bottom: 2.2rem;
+  z-index: 15;
+  width: clamp(190px, 19vw, 280px);
+  aspect-ratio: 902 / 693;
+  pointer-events: none;
+  animation: ali-float 7s ease-in-out infinite alternate;
+}
+
+/* He is company, not furniture: on a narrow window there is no corner to
+   spare and he would simply be in the way. */
+@media (max-width: 1023px) {
+  .ali {
+    display: none;
+  }
+}
+
+.ali-pose {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  /* Short on purpose. The three drawings came from three separate runs, so the
+     plant and the books shift a little between them; a quick dissolve reads as
+     movement where a slow one would read as a wobble. */
+  transition: opacity 0.22s var(--ease, ease);
+}
+
+.ali[data-pose="idle"] .ali-pose[data-p="idle"],
+.ali[data-pose="write"] .ali-pose[data-p="write"],
+.ali[data-pose="read"] .ali-pose[data-p="read"] {
+  opacity: 1;
+}
+
+@keyframes ali-float {
+  to {
+    transform: translateY(-7px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ali {
+    animation: none;
+  }
+
+  .ali-pose {
+    transition: none;
+  }
+}
