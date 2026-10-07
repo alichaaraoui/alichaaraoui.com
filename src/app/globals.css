@@ -872,179 +872,126 @@ html {
 /* ------------------------------------------------------- desktop reel ---- */
 
 /*
- * The phone reel stood up on the right, with the introduction beside it.
- * Nothing in the rail is laid out in flow: it is a single point in the middle
- * of its column and DeskReel places every project around it by transform, so
- * the browser never reflows while the reel moves.
- */
-/*
- * The spiral is the page: the rail fills it edge to edge and the helix turns
- * about its centre. The writing floats over the left of it rather than taking
- * a column of its own — penning the spiral into half the width was what left
- * it looking small and clipped.
+ * One row of projects across the page, the middle one large and the rest
+ * falling away to either side.
+ *
+ * Nothing here is laid out in flow: the row is a single point in the middle of
+ * the page and DeskReel places every card around it by transform, so the
+ * browser never reflows while the carousel moves. Which also means the row
+ * cannot be clipped by its own overflow — the cards running off both edges are
+ * the point, and the page's own edge is what hides them.
  */
 .dreel {
   position: relative;
   height: 100%;
-  /* The one dark room on the site. Panels read as lit objects against it, and
-     the depth the spiral is doing has somewhere to disappear into. */
-  background: #090909;
-  color: #fff;
-}
-
-.dreel-side {
-  position: absolute;
-  left: var(--gutter);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
-  width: min(23rem, 26vw);
-  pointer-events: none;
-}
-
-/* Keyed to the dark room, and haloed so it stays readable over whatever
-   happens to drift behind it. */
-.dreel-side .note-lead,
-.dreel-side .note-line {
-  color: #fff;
-  text-shadow:
-    0 0 16px #090909,
-    0 0 32px #090909;
-}
-
-.dreel-side .note-em {
-  background: rgb(255 255 255 / 0.14);
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.14);
-}
-
-.dreel-intro .note-body + .note-body {
-  margin-top: 1.15rem;
-}
-
-/* Where the art goes. Collapsed until there is something in it, so an empty
-   slot never shows as a hole in the page. */
-.dreel-plate:empty {
-  display: none;
-}
-
-.dreel-plate {
-  padding-top: 1.75rem;
-  display: grid;
-  gap: 0.5rem;
-}
-
-/* Mini me. Inverted, because the only dark room on the site is this one. */
-.dreel-plate img {
-  width: 100%;
-  height: auto;
-  filter: invert(1);
-  opacity: 0.85;
-}
-
-/*
- * The rail supplies the lens, the drum supplies the 3D space, and DeskReel
- * places every project on a helix inside it. The browser depth-sorts the drum's
- * children itself, which is why nothing here sets a z-index.
- *
- * Deliberately not clipped: the spiral is allowed to run to the edges of the
- * screen, and the screen is the only thing that cuts it off.
- */
-.dreel-rail {
-  position: absolute;
-  inset: 0;
-  perspective: var(--dreel-depth, 1150px);
-  perspective-origin: 50% 50%;
+  overflow: hidden;
   cursor: grab;
-  touch-action: none;
-  user-select: none;
+  touch-action: pan-y;
 }
 
-.dreel-drum {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-}
-
-.dreel-rail:active {
+.dreel:active {
   cursor: grabbing;
 }
 
-/* Anchored to the middle of the rail; the transform carries it up or down. */
+.dreel-row {
+  position: absolute;
+  inset: 0;
+}
+
 .dreel-item {
   position: absolute;
   top: 50%;
   left: 50%;
   display: block;
-  /* Set by DeskReel from the rail's height; the column width is only a cap. */
-  width: var(--dreel-w, 100%);
-  transform-style: preserve-3d;
-  will-change: transform, opacity;
+  /* The width is set per frame; the height follows the picture's own shape, so
+     nothing is cropped into a common frame. */
+  will-change: transform, width;
+}
+
+.dreel-frame {
+  position: relative;
+  display: block;
+}
+
+/* Art lays its picture out absolutely, so the shape has to live here — and it
+   is the project's own shape, which is what stops object-fit cropping it. */
+.dreel-art {
+  position: relative;
+  display: block;
+  aspect-ratio: var(--ar, 1.5);
+  overflow: hidden;
+}
+
+/* Corner brackets, on whatever is in the middle. */
+.dreel-brackets {
+  position: absolute;
+  inset: -1.1rem;
+  opacity: var(--meta, 0);
+  pointer-events: none;
+}
+
+.dreel-brackets span {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid rgb(10 10 10 / 0.45);
+}
+
+.dreel-brackets span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.dreel-brackets span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.dreel-brackets span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.dreel-brackets span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
 }
 
 /*
- * A panel is not one flat card but a row of vertical strips, each turned a
- * little further than the last, so the sheet bows in the air. A single element
- * cannot be bent in 3D, and a filter or an overflow on this would flatten the
- * strips' own 3D — which is why there is neither.
+ * The caption sits above the picture and the title below it, and both are
+ * pulled out of the flow so that showing them does not shove the picture off
+ * centre — only whatever is in the middle carries them.
  */
-.dreel-frame {
-  position: relative;
-  display: flex;
-  width: 100%;
-  aspect-ratio: 3 / 2;
-  transform-style: preserve-3d;
-}
-
-.dreel-slice {
-  flex: 1 1 0;
-  background-image: var(--src);
-  background-size: calc(var(--n) * 100%) 100%;
-  background-position: calc(var(--k) / (var(--n) - 1) * 100%) 50%;
-  background-repeat: no-repeat;
-  background-color: #141414;
-  /* Half a pixel of overlap, or the seams show as hairlines. */
-  margin-inline: -0.5px;
-  transform: rotateY(calc((var(--k) - (var(--n) - 1) / 2) * var(--bend)));
-}
-
-/* A project with no picture shows its tone instead of nine identical plates. */
-.dreel-plain .dreel-slice {
-  background-color: transparent;
-}
-
-/* Only whatever is in the middle carries its caption. */
-.dreel-meta {
+.dreel-sub,
+.dreel-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: block;
-  padding-top: 1.4rem;
+  width: max-content;
+  max-width: 90vw;
   opacity: var(--meta, 0);
   text-align: center;
   pointer-events: none;
 }
 
-.dreel-count,
-.dreel-title,
 .dreel-sub {
-  display: block;
-}
-
-.dreel-count {
-  font-size: 9px;
-  letter-spacing: 0.11em;
-  color: rgb(255 255 255 / 0.45);
+  bottom: calc(100% + 2.6rem);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: #9a9a9a;
 }
 
 .dreel-title {
-  padding-top: 0.4rem;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-}
-
-.dreel-sub {
-  padding-top: 0.25rem;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: rgb(255 255 255 / 0.5);
+  top: calc(100% + 2.4rem);
+  font-size: 26px;
+  letter-spacing: 0.01em;
+  color: var(--color-foreground);
 }
 
 /* --------------------------------------------------------- phone reel ---- */

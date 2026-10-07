@@ -3,89 +3,91 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { CSSProperties, WheelEvent as ReactWheelEvent } from "react";
 import Link from "next/link";
-import { NoteBody } from "./NoteTile";
+import { Art } from "./Art";
 import { play } from "@/lib/audio";
 import { handOver, prefersReducedMotion, veilIndex } from "@/lib/transition";
 import { useRoute } from "@/lib/useRoute";
-import { notes, type Project } from "@/data/projects";
+import type { Project } from "@/data/projects";
 
-/** Wheel distance that advances the reel by one project. */
+/** Wheel distance that advances the carousel by one project. */
 const STEP = 190;
 
 /*
- * Shape of the spiral, taken off the reference frame by frame rather than
- * guessed: the pictures are wound round an axis pointing INTO the screen, so
- * each step turns a little further round the ring, drifts outward from the
- * middle and drops further back. Perspective then pulls the far ones in toward
- * a vanishing point and shrinks them, which is what gives the spiral no end.
- *
- * The earlier version laid them along a band on a sphere. Nothing about that
- * can work: the climb and the turn pull against each other, and across a search
- * of the whole constant space there is no setting that clears nine pictures
- * inside a laptop screen.
+ * The scale curve, which is the whole effect. Whatever is in the middle is at
+ * full size; its neighbours drop straight to a fraction of it and then fall
+ * away by a constant ratio each step out. The cliff between the middle and the
+ * first neighbour is deliberate — an even taper reads as a row of thumbnails,
+ * and the jump is what makes the middle one the subject.
  */
-const TURN = 0.85; // radians round the ring per project — ~1.3 turns on screen
-/* The ring has to be wide enough that neighbours clear each other round it:
-   the chord between two of them is 2·RHO0·sin(TURN/2) picture widths, and that
-   has to beat one whole picture. It is why the pictures are smaller here than
-   in the reference — at the reference's size they cannot help but collide. */
-const RHO0 = 1.75; // ring radius at the front, in picture widths
-const GROW = 0.02; // how much the ring opens out per project
-const PITCH = 0.85; // how far back each project drops, in picture widths
-const DEPTH = 1100; // perspective distance in px — lower is a wider-angle lens
-const NEAR = 0.9; // projects drawn in FRONT of the focused one
-const FAR = 9; // and behind it, by which point they are nearly dark
+const DROP = 0.38; // the first neighbour, as a fraction of the middle one
+const FALL = 0.8; // and each step further out, as a fraction of the last
 
-/* Each panel is built from this many vertical strips, each turned a little
-   further than the last, so it reads as a sheet of paper bowing in the air
-   rather than a flat card. CSS cannot bend a single element in 3D; this is the
-   way to fake it. */
-const SLICES = 9;
-const BEND = 2.4; // degrees of turn between neighbouring strips
+/* Gap between neighbouring cards, in the smaller card's widths, so the rhythm
+   holds as they shrink. The middle one is given more room than the rest. */
+const GAP = 0.14;
+const GAP_MID = 0.26;
 
-/* The list is laid round the spiral this many times. It has to cover NEAR+FAR
-   with room to spare, or the band runs out before it reaches the vanishing
-   point and the spiral visibly ends. */
+/* Cards further out than this are not drawn. Eleven across is what fills a
+   laptop; the rest would be sub-pixel anyway. */
+const VISIBLE = 5.5;
+
+/* The list is laid out this many times over, so the row runs off both edges
+   rather than ending. */
 const REPEATS = 3;
 
-/* The spiral never rests. A step takes about eight seconds at 60fps, slow
-   enough to read as drift rather than as a carousel advancing. */
-const DRIFT = 0.0021;
-
-/* A fixed, repeatable nudge per panel, so the ring is not mechanically even.
-   Deterministic, so it cannot differ between the server render and the
-   browser. */
-const wobble = (i: number) => Math.sin(i * 12.9898) * 0.5 + 0.5;
-const WOB = 0.05; // radians of extra turn round the ring
-const SPILL = 0.05; // picture widths of extra radius
-const ROLL = 0.05; // radians of tilt in the picture's own plane
-
-/* The focused picture is sized off the rail's HEIGHT, not its column width: at
-   full column width it ate the rail and left the spiral nowhere to turn. */
-const FRAME = 0.18;
-const FRAME_AR = 1.5;
+/* The middle card, against the rail. Width leads, because the row is a
+   horizontal rhythm; anything too tall for the rail is pulled back by its own
+   height afterwards. */
+const CARD_W = 0.44;
+const CARD_H = 0.7; // leaves the caption and the title their own room
 
 /* A critically damped spring. A linear chase crawls the last few pixels and
    never quite arrives; this carries speed into the move and settles. */
-const STIFF = 0.14;
-const DAMP = 0.76;
-const REST = 0.0004;
+const STIFF = 0.16;
+const DAMP = 0.74;
+const REST = 0.0006;
 
-/* Perspective does the shrinking now, so there is no scale curve to tune. */
+/* After a scroll or a drag stops, the row settles on whichever project is
+   nearest the middle. Without it the carousel comes to rest between two. */
+const SETTLE = 170;
+
+/* Left alone, the row keeps moving on its own: a step every twelve seconds or
+   so, slow enough to read as drift rather than as a carousel advancing. The
+   wait is long enough that it does not start up again the moment a scroll
+   stops — settling on a project and sitting there for a beat is the point. */
+const IDLE_AFTER = 2600;
+/* Projects per SECOND, not per frame. Per frame it would run at double speed
+   on a 120Hz laptop and crawl on anything throttled. */
+const DRIFT = 0.085;
+/* A tab left in the background wakes up with one enormous gap; clamping it
+   stops the row lurching forward the moment it is looked at again. */
+const MAX_DT = 0.1;
+
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
+/* Whatever is in the middle is at full size; its neighbours drop straight to a
+   fraction of it and then fall away by a constant ratio each step out. */
+const scaleOf = (away: number) =>
+  away <= 1 ? 1 - (1 - DROP) * away : DROP * Math.pow(FALL, away - 1);
+
+/* Slots laid out either side of the middle. One more than is ever drawn, so a
+   card never asks for a seat the walk has not reached. */
+const REACH = Math.ceil(VISIBLE) + 1;
+
 /**
- * The desktop project directory: the phone's depth reel, run down the right
- * side of the screen with the introduction beside it. Whatever is in the middle
- * is large and sharp; everything else shrinks, blurs, greys and bunches toward
- * the top and bottom edges.
+ * The desktop project directory: one row of projects, the middle one large and
+ * the rest falling away to either side.
  *
- * Nothing is laid out in flow and there is no scroll container. A wheel or a
- * drag moves a target, a spring carries the focus toward it, and each project
- * is placed by its distance from that focus. Driving it directly rather than
- * through native scrolling is what makes the reel endless for free: distance is
- * measured around a circle, so there is no track to run out of and no scroll
- * position to wind back.
+ * Nothing is laid out in flow. A wheel or a drag moves a target, a spring
+ * carries the focus toward it, and each project is placed by its distance from
+ * that focus. Driving it directly rather than through native scrolling is what
+ * makes the row endless for free: distance is measured around a circle, so
+ * there is no track to run out of and no scroll position to wind back.
+ *
+ * Positions are accumulated outward from the middle rather than computed from
+ * a formula, because the cards are different widths — each project keeps its
+ * own shape instead of being cropped into a common frame — and only a running
+ * total keeps the gaps between them even.
  */
 export function DeskReel({ projects }: { projects: Project[] }) {
   const rail = useRef<HTMLDivElement>(null);
@@ -94,12 +96,33 @@ export function DeskReel({ projects }: { projects: Project[] }) {
   const target = useRef(0);
   const vel = useRef(0);
   const frame = useRef(0);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const drifting = useRef(false);
+  const last = useRef(0);
   const held = useRef(false);
   const { hash } = useRoute();
   const total = projects.length;
 
-  /* The same projects laid round the helix REPEATS times. One pass round and
-     the spiral simply stops; two and there is always something further back. */
+  /* The same projects laid round the row REPEATS times. One pass and the row
+     visibly ends; three and there is always something past the edge. */
+  /* A project with no picture is a plain tone plate, so its shape is nobody's
+     decision — give it the row's own landscape rhythm rather than letting a
+     placeholder's aspect drive the layout. */
+  const shapeOf = useCallback(
+    (p: Project) => (p.hero ? p.ratio || 1.5 : 1.5),
+    []
+  );
+
+  /* How wide a card can be before the tallest project runs off the top and
+     bottom of the rail — but floored, because one very tall project should not
+     shrink the entire row to fit itself. Anything taller than the floor is
+     narrowed on its own below instead. */
+  const tallest = useMemo(
+    () => Math.max(0.9, Math.min(...projects.map(shapeOf))),
+    [projects, shapeOf]
+  );
+
   const ring = useMemo(
     () =>
       Array.from({ length: total * REPEATS }, (_, k) => ({
@@ -112,239 +135,297 @@ export function DeskReel({ projects }: { projects: Project[] }) {
   const paint = useCallback(() => {
     const el = rail.current;
     if (!el) return;
-    const height = el.clientHeight;
     const at = focus.current;
-
-    const frameW = Math.min(el.clientWidth * 0.42, height * FRAME * FRAME_AR);
-    el.style.setProperty("--dreel-w", `${frameW.toFixed(1)}px`);
-    el.style.setProperty("--dreel-depth", `${DEPTH}px`);
-
     const span = total * REPEATS;
+
+    /* The middle card at full size. Width leads, because the row is a
+       horizontal rhythm; the height cap is what keeps a tall project off the
+       nav and the footer. */
+    const maxH = el.clientHeight * CARD_H;
+    const baseW = Math.min(el.clientWidth * CARD_W, maxH * tallest);
+
+    /* Every card is the same width unless its own shape would make it too
+       tall, in which case the height binds and it comes out narrower. Nothing
+       is cropped to fit a common frame. */
+    const widthOf = (k: number) => {
+      const p = projects[((Math.round(k) % total) + total) % total];
+      return Math.min(baseW, maxH * shapeOf(p)) * scaleOf(Math.abs(k - at));
+    };
+
+    /* Gap between a pair, in the smaller card's widths so the rhythm holds as
+       they shrink. The pair straddling the middle is given more air, eased in
+       rather than switched, or the row would jolt as the focus crosses. */
+    const gapOf = (a: number, b: number) => {
+      const near = Math.min(Math.abs(a - at), Math.abs(b - at));
+      const k = near >= 1 ? GAP : GAP_MID + (GAP - GAP_MID) * near;
+      return k * Math.min(widthOf(a), widthOf(b));
+    };
+
+    /*
+     * Lay the row out by walking outward from the middle, adding half of this
+     * card, a gap, and half of the next. Walking it — rather than giving each
+     * card an offset from a formula — is what lets the cards be different
+     * widths and still sit an even distance apart.
+     *
+     * Everything here is a continuous function of the focus, the widths
+     * included, so the row slides rather than snapping between layouts as the
+     * cards change places.
+     */
+    const seat = Math.floor(at);
+    const centre = new Map<number, number>([[seat, 0]]);
+    let run = 0;
+    for (let k = seat + 1; k <= seat + REACH; k++) {
+      run += widthOf(k - 1) / 2 + gapOf(k - 1, k) + widthOf(k) / 2;
+      centre.set(k, run);
+    }
+    run = 0;
+    for (let k = seat - 1; k >= seat - REACH; k--) {
+      run -= widthOf(k + 1) / 2 + gapOf(k, k + 1) + widthOf(k) / 2;
+      centre.set(k, run);
+    }
+    /* The middle of the screen sits between the two cards the focus is
+       between, so that landing on a project puts it exactly in the middle. */
+    const f = at - seat;
+    const origin =
+      (centre.get(seat) ?? 0) * (1 - f) + (centre.get(seat + 1) ?? 0) * f;
 
     items.current.forEach((node, i) => {
       if (!node) return;
-      /* Distance measured round the whole laid-out ring, so whichever copy of a
-         project is nearest the front is the one drawn. The window is lopsided
-         on purpose: a couple of projects stand in front of the focused one, and
-         everything else winds away behind it. */
+      /* Distance measured around the whole laid-out row, so whichever copy of
+         a project is nearest the middle is the one drawn. */
       let d = (((i - at) % span) + span) % span;
-      if (d > span - NEAR) d -= span;
+      if (d > span / 2) d -= span;
+      const away = Math.abs(d);
+      const slot = centre.get(Math.round(at + d));
 
-      if (d > FAR) {
+      if (away > VISIBLE || slot === undefined) {
         node.style.opacity = "0";
         node.style.visibility = "hidden";
         return;
       }
       node.style.visibility = "visible";
+      node.style.width = `${widthOf(at + d).toFixed(2)}px`;
+      node.style.transform = `translate(calc(-50% + ${(slot - origin).toFixed(2)}px), -50%)`;
+      node.style.opacity = clamp01(1.08 - Math.pow(away / VISIBLE, 1.6)).toFixed(3);
+      node.style.zIndex = String(100 - Math.round(away * 10));
 
-      const w = wobble(i) - 0.5;
-      const turn = d * TURN + w * WOB;
-      const radius = (RHO0 + d * GROW + w * SPILL) * frameW;
-
-      const x = radius * Math.cos(turn);
-      const y = radius * Math.sin(turn);
-      const z = -d * PITCH * frameW;
-
-      node.style.transform =
-        `translate3d(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px), ${z.toFixed(2)}px)` +
-        ` rotateZ(${(turn * 0.12 + w * 2 * ROLL).toFixed(4)}rad)`;
-
-      /* Into the dark rather than off a cliff: the spiral has no end, it just
-         stops being lit. */
-      const away = Math.max(0, d) / FAR;
-      node.style.opacity = clamp01(1.02 - Math.pow(away, 1.35)).toFixed(3);
-      node.style.zIndex = String(1000 - Math.round(d * 20));
-
-      /* The caption belongs to whatever is at the front. */
-      node.style.setProperty("--meta", clamp01(1 - Math.abs(d) * 2.6).toFixed(3));
+      /* The caption and the brackets belong to whatever is in the middle, and
+         fade faster than the picture so they never double up. */
+      node.style.setProperty("--meta", clamp01(1 - away * 2.4).toFixed(3));
     });
-  }, [total]);
+  }, [projects, shapeOf, tallest, total]);
 
-  /*
-   * Carry the focus toward the target on a spring, and move the target on by a
-   * hair every frame. The loop never ends — the spiral is always turning, and a
-   * wheel or a drag just shoves it along faster.
-   */
+  /* Carry the focus toward the target on a spring, nudging the target along by
+     a hair while the row is drifting. The loop stops once it has arrived and
+     nothing is driving it — a carousel sitting still should cost nothing. */
+  /* The loop holds itself through a ref. A callback that names itself inside
+     its own body closes over the first one it was ever given, and so never
+     sees a later paint. */
+  const loop = useRef<() => void>(() => {});
   const run = useCallback(() => {
-    /* Something that moves forever and was never asked to is exactly what the
-       reduced-motion preference is about, so the drift stops for it. The reel
-       still answers a wheel or a drag. */
-    if (!held.current && !prefersReducedMotion()) target.current += DRIFT;
+    const now = performance.now();
+    const dt = Math.min(MAX_DT, (now - last.current) / 1000);
+    last.current = now;
+    if (drifting.current && !held.current) target.current += DRIFT * dt;
     const gap = target.current - focus.current;
     vel.current = (vel.current + gap * STIFF) * DAMP;
     focus.current += vel.current;
     paint();
-    frame.current = requestAnimationFrame(run);
+    if (
+      !drifting.current &&
+      Math.abs(gap) < REST &&
+      Math.abs(vel.current) < REST
+    ) {
+      focus.current = target.current;
+      vel.current = 0;
+      paint();
+      frame.current = 0;
+      return;
+    }
+    frame.current = requestAnimationFrame(() => loop.current());
   }, [paint]);
 
-  const start = useCallback(() => {
-    if (!frame.current) frame.current = requestAnimationFrame(run);
+  /* In an effect, not during the render: assigning to a ref while rendering is
+     a tear waiting to happen if React ever throws the render away. */
+  useEffect(() => {
+    loop.current = run;
   }, [run]);
 
-  /* No snapping: the spiral is never meant to come to rest on a project. */
+  const start = useCallback(() => {
+    /* Zeroing the id on the way out matters as much as this guard: leaving a
+       cancelled one behind means no loop is ever begun again, which React's
+       double mount in development hits on the very first render. */
+    if (frame.current) return;
+    last.current = performance.now();
+    frame.current = requestAnimationFrame(() => loop.current());
+  }, []);
+
+  const snap = useCallback(() => {
+    target.current = Math.round(target.current);
+    start();
+  }, [start]);
+
+  /* Any touch of the reel stops the drift and puts the clock back to zero.
+     Something that moves forever and was never asked to is exactly what the
+     reduced-motion preference is about, so for that it never starts. */
+  const rouse = useCallback(() => {
+    drifting.current = false;
+    if (idle.current) clearTimeout(idle.current);
+    if (prefersReducedMotion()) return;
+    idle.current = setTimeout(() => {
+      drifting.current = true;
+      start();
+    }, IDLE_AFTER);
+  }, [start]);
+
   const nudge = useCallback(
-    (by: number) => {
+    (by: number, thenSnap: boolean) => {
+      rouse();
       target.current += by;
       if (prefersReducedMotion()) {
+        target.current = Math.round(target.current);
         focus.current = target.current;
         vel.current = 0;
       }
+      if (settle.current) clearTimeout(settle.current);
+      if (thenSnap) settle.current = setTimeout(snap, SETTLE);
       start();
     },
-    [start],
+    [rouse, snap, start]
   );
 
   const onWheel = useCallback(
     (e: ReactWheelEvent<HTMLDivElement>) => {
       const delta =
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      nudge(delta / STEP);
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      nudge(delta / STEP, true);
     },
-    [nudge],
+    [nudge]
   );
 
   useEffect(() => {
-    /* Lay the spiral out once up front, then hand it to the loop. Leaving the
+    /* Lay the row out once up front, then hand it to the loop. Leaving the
        first placement to the loop means a tab that is not being painted shows
-       every panel stacked at the centre until it is looked at. */
+       every card stacked in the middle until it is looked at. */
     paint();
-    start();
+    rouse();
     const onResize = () => paint();
     window.addEventListener("resize", onResize);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown") nudge(1);
-      else if (e.key === "ArrowUp") nudge(-1);
+      if (e.key === "ArrowRight") nudge(1, false);
+      else if (e.key === "ArrowLeft") nudge(-1, false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
-      /* Zeroing this matters: start() skips when it is set, so leaving a
-         cancelled id behind means no loop is ever begun again. React's double
-         mount in development hits that on the very first render. */
+      if (settle.current) clearTimeout(settle.current);
+      if (idle.current) clearTimeout(idle.current);
+      drifting.current = false;
       if (frame.current) cancelAnimationFrame(frame.current);
       frame.current = 0;
     };
-  }, [paint, nudge, start]);
+  }, [paint, nudge, rouse]);
 
-  /** Dragging the reel, for anyone without a wheel. */
-  const drag = useRef<{ y: number; from: number } | null>(null);
+  /** Dragging the row, for anyone without a wheel. */
+  const drag = useRef<{ x: number; from: number } | null>(null);
 
   return (
-    <div className="dreel">
-      <div className="dreel-side">
-        <div className="dreel-intro">
-          {notes.map((n) => (
-            <NoteBody key={n.id} note={n} />
-          ))}
-        </div>
-        <div className="dreel-plate">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/mini-ali.png" alt="" />
-        </div>
-      </div>
-
-      <div
-        ref={rail}
-        className="dreel-rail"
-        onWheel={onWheel}
-        onPointerDown={(e) => {
-          if (e.button !== 0) return;
-          held.current = true;
-          drag.current = { y: e.clientY, from: target.current };
-        }}
-        onPointerMove={(e) => {
-          const d = drag.current;
-          const el = rail.current;
-          if (!d || !el) return;
-          target.current = d.from - (e.clientY - d.y) / (el.clientHeight * 0.3);
-          start();
-        }}
-        onPointerUp={() => {
-          held.current = false;
-          drag.current = null;
-        }}
-        onPointerCancel={() => {
-          held.current = false;
-          drag.current = null;
-        }}
-      >
-        <div className="dreel-drum">
-          {ring.map(({ p, key }, i) => (
-            <Link
-              key={key}
-              href={`/work/${p.slug}/${hash}`}
-              className="dreel-item"
-              ref={(el) => {
-                items.current[i] = el;
-              }}
-              onClick={(e) => {
-                /* Clicking something off to the side brings it to the middle;
+    <div
+      ref={rail}
+      className="dreel"
+      onWheel={onWheel}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        held.current = true;
+        rouse();
+        drag.current = { x: e.clientX, from: target.current };
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current;
+        const el = rail.current;
+        if (!d || !el) return;
+        target.current = d.from - (e.clientX - d.x) / (el.clientWidth * 0.22);
+        start();
+      }}
+      onPointerUp={() => {
+        held.current = false;
+        if (drag.current) {
+          rouse();
+          snap();
+        }
+        drag.current = null;
+      }}
+      onPointerCancel={() => {
+        held.current = false;
+        drag.current = null;
+      }}
+    >
+      <div className="dreel-row">
+        {ring.map(({ p, key }, i) => (
+          <Link
+            key={key}
+            href={`/work/${p.slug}/${hash}`}
+            className="dreel-item"
+            /* Art fills its box absolutely, so the box has to carry the shape.
+               Giving it the project's OWN ratio is also what keeps object-fit
+               from cropping anything. */
+            style={{ "--ar": String(shapeOf(p)) } as CSSProperties}
+            ref={(el) => {
+              items.current[i] = el;
+            }}
+            onClick={(e) => {
+              /* Clicking something off to the side brings it to the middle;
                  only the project already in the middle opens. */
-                const span = total * REPEATS;
-                let d = (((i - focus.current) % span) + span) % span;
-                if (d > span - NEAR) d -= span;
-                if (Math.abs(d) > 0.5) {
-                  e.preventDefault();
-                  play("nav");
-                  nudge(d);
-                  return;
-                }
-                play("project");
-                handOver(
-                  p.slug,
-                  e.currentTarget.querySelector(".dreel-art") ??
-                    e.currentTarget,
-                );
-                if (
-                  e.button !== 0 ||
-                  e.metaKey ||
-                  e.ctrlKey ||
-                  e.shiftKey ||
-                  e.altKey
-                )
-                  return;
-                if (prefersReducedMotion()) return;
-                veilIndex(null);
-              }}
-            >
-              <span
-                /* Six of the projects have no picture at all. Without this they
-                   all come out as the same dark plate, and the spiral reads as
-                   mostly empty — the tone is the fallback the rest of the site
-                   already uses for them. */
-                className={
-                  p.hero
-                    ? "dreel-frame"
-                    : `dreel-frame dreel-plain bg-gradient-to-br ${p.tone}`
-                }
-                style={
-                  {
-                    "--src": p.hero ? `url(${p.hero.src})` : undefined,
-                    "--n": SLICES,
-                    "--bend": `${BEND}deg`,
-                  } as CSSProperties
-                }
-              >
-                {Array.from({ length: SLICES }, (_, k) => (
-                  <span
-                    key={k}
-                    className="dreel-slice"
-                    style={{ "--k": k } as CSSProperties}
-                  />
-                ))}
+              const span = total * REPEATS;
+              let d = (((i - focus.current) % span) + span) % span;
+              if (d > span / 2) d -= span;
+              if (Math.abs(d) > 0.5) {
+                e.preventDefault();
+                play("nav");
+                nudge(d, false);
+                return;
+              }
+              play("project");
+              handOver(
+                p.slug,
+                e.currentTarget.querySelector(".dreel-art") ?? e.currentTarget
+              );
+              if (
+                e.button !== 0 ||
+                e.metaKey ||
+                e.ctrlKey ||
+                e.shiftKey ||
+                e.altKey
+              )
+                return;
+              if (prefersReducedMotion()) return;
+              veilIndex(null);
+            }}
+          >
+            <span className="dreel-sub">{p.blurb}</span>
+
+            <span className="dreel-frame">
+              <span className="dreel-art">
+                <Art
+                  img={p.hero}
+                  tone={p.tone}
+                  alt={p.title}
+                  sizes="40vw"
+                  playAbove={260}
+                />
               </span>
-              <span className="dreel-meta">
-                <span className="dreel-count">
-                  {String(i + 1).padStart(2, "0")}/
-                  {String(total).padStart(2, "0")}
-                </span>
-                <span className="dreel-title">{p.title}</span>
-                <span className="dreel-sub">{p.blurb}</span>
+              <span className="dreel-brackets" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
               </span>
-            </Link>
-          ))}
-        </div>
+            </span>
+
+            <span className="dreel-title">{p.title}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );
