@@ -913,12 +913,13 @@ html {
   display: block;
 }
 
-/* Art lays its picture out absolutely, so the shape has to live here — and it
-   is the project's own shape, which is what stops object-fit cropping it. */
+/* Art lays its picture out absolutely, so the shape has to live here. One
+   frame for every project, which is what lets the row grade cleanly; a wide
+   picture is cropped to its middle to fit. */
 .dreel-art {
   position: relative;
   display: block;
-  aspect-ratio: var(--ar, 1.5);
+  aspect-ratio: 3 / 4;
   overflow: hidden;
 }
 

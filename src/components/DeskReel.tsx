@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { CSSProperties, WheelEvent as ReactWheelEvent } from "react";
+import type { WheelEvent as ReactWheelEvent } from "react";
 import Link from "next/link";
 import { Art } from "./Art";
 import { play } from "@/lib/audio";
@@ -36,19 +36,18 @@ const VISIBLE = 5.5;
 const REPEATS = 3;
 
 /*
- * The middle card, against the rail. HEIGHT is what the scale curve is applied
- * to, not width.
+ * Every card is the same 3:4 portrait, measured off the reference: its middle
+ * card is 520x704 and its neighbours 192x256 and 157x212, all landing on 0.74.
  *
- * The projects are not all the same shape — architecture is half tall renders
- * and half wide ones — and grading their widths puts a portrait and the
- * landscape beyond it at nearly the same size, which breaks the one thing the
- * row is doing. Grading their heights cannot: every card at a given step is
- * exactly the same height, so the progression reads whatever is in the row,
- * and each picture still keeps its own shape rather than being cropped into a
- * common frame.
+ * One frame for every project is what makes the row grade cleanly — with each
+ * picture in its own shape a portrait and the landscape beyond it come out the
+ * same size and the progression stalls. The cost is that a wide picture is
+ * cropped to fit, which for a 16:9 screenshot means keeping the middle 42% of
+ * it. The project's own page shows it whole.
  */
-const CARD_W = 0.5; // the WIDEST card's share of the rail
-const CARD_H = 0.7; // leaves the caption and the title their own room
+const CARD_AR = 0.75;
+const CARD_W = 0.32; // the middle card's share of the rail's width
+const CARD_H = 0.7; // and of its height, leaving the caption and title room
 
 /* A critically damped spring. A linear chase crawls the last few pixels and
    never quite arrives; this carries speed into the move and settles. */
@@ -115,21 +114,6 @@ export function DeskReel({ projects }: { projects: Project[] }) {
 
   /* The same projects laid round the row REPEATS times. One pass and the row
      visibly ends; three and there is always something past the edge. */
-  /* A project with no picture is a plain tone plate, so its shape is nobody's
-     decision — give it the row's own landscape rhythm rather than letting a
-     placeholder's aspect drive the layout. */
-  const shapeOf = useCallback(
-    (p: Project) => (p.hero ? p.ratio || 1.5 : 1.5),
-    []
-  );
-
-  /* The widest shape on the list, which is what decides how tall a card can be
-     before that project runs off the sides of the rail. */
-  const widest = useMemo(
-    () => Math.max(...projects.map(shapeOf)),
-    [projects, shapeOf]
-  );
-
   const ring = useMemo(
     () =>
       Array.from({ length: total * REPEATS }, (_, k) => ({
@@ -145,20 +129,15 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     const at = focus.current;
     const span = total * REPEATS;
 
-    /* The middle card's height. Capped by the rail so nothing runs into the
-       nav or the footer, and by the rail's WIDTH through the widest project on
-       the list, so that one cannot run off the sides either. */
-    const baseH = Math.min(
-      el.clientHeight * CARD_H,
-      (el.clientWidth * CARD_W) / widest
+    /* The middle card, held down by whichever of the rail's two dimensions
+       runs out first. Every card is this shape, so the width alone carries the
+       whole progression. */
+    const baseW = Math.min(
+      el.clientWidth * CARD_W,
+      el.clientHeight * CARD_H * CARD_AR
     );
 
-    /* Height is the graded quantity; the width is only ever that height times
-       the project's own shape. */
-    const widthOf = (k: number) => {
-      const p = projects[((Math.round(k) % total) + total) % total];
-      return baseH * scaleOf(Math.abs(k - at)) * shapeOf(p);
-    };
+    const widthOf = (k: number) => baseW * scaleOf(Math.abs(k - at));
 
     /* Gap between a pair, in the smaller card's widths so the rhythm holds as
        they shrink. The pair straddling the middle is given more air, eased in
@@ -221,7 +200,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
          fade faster than the picture so they never double up. */
       node.style.setProperty("--meta", clamp01(1 - away * 2.4).toFixed(3));
     });
-  }, [projects, shapeOf, total, widest]);
+  }, [total]);
 
   /* Carry the focus toward the target on a spring, nudging the target along by
      a hair while the row is drifting. The loop stops once it has arrived and
@@ -375,10 +354,6 @@ export function DeskReel({ projects }: { projects: Project[] }) {
             key={key}
             href={`/work/${p.slug}/${hash}`}
             className="dreel-item"
-            /* Art fills its box absolutely, so the box has to carry the shape.
-               Giving it the project's OWN ratio is also what keeps object-fit
-               from cropping anything. */
-            style={{ "--ar": String(shapeOf(p)) } as CSSProperties}
             ref={(el) => {
               items.current[i] = el;
             }}
