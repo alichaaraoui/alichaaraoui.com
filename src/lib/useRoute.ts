@@ -4,7 +4,7 @@ import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES, DEFAULT_CATEGORY, type Category } from "@/data/projects";
 
-export const VIEWS = ["index", "grid", "list", "mood", "reel"] as const;
+export const VIEWS = ["index", "grid", "reel"] as const;
 export type View = (typeof VIEWS)[number];
 
 const isView = (v: string): v is View => (VIEWS as readonly string[]).includes(v);

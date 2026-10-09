@@ -6,8 +6,6 @@ import {
   Empty,
   GridView,
   IndexView,
-  ListView,
-  MoodView,
   ReelView,
 } from "@/components/views";
 import { useIsPhone } from "@/lib/useIsPhone";
@@ -16,8 +14,8 @@ import { projects } from "@/data/projects";
 
 export default function Home() {
   const { view, category } = useRoute();
-  /* A phone gets the reel whatever the hash says: index, list and mood are
-     desktop layouts, and the menu no longer offers them. */
+  /* A phone gets the reel whatever the hash says: the index is a desktop
+     layout, and the menu no longer offers it. */
   const phone = useIsPhone();
 
   const visible = useMemo(
@@ -34,8 +32,6 @@ export default function Home() {
           <>
             {(phone || view === "grid") && <GridView projects={visible} />}
             {!phone && view === "index" && <IndexView projects={visible} />}
-            {!phone && view === "list" && <ListView projects={visible} />}
-            {!phone && view === "mood" && <MoodView projects={visible} />}
             {!phone && view === "reel" && <ReelView projects={visible} />}
           </>
         )}

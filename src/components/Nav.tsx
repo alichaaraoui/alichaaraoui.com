@@ -152,8 +152,8 @@ export function Nav() {
           <div className="nav-groups-clip">
             <div className="nav-groups-inner">
               <nav className="nav-views flex items-center gap-1" aria-label="View">
-                {/* Index, list and mood are desktop layouts. A phone has one
-                    way to see the work — the reel — so it gets one entry. */}
+                {/* The index is a desktop layout. A phone has one way to see
+                    the work — the reel — so it gets one entry. */}
                 {phone ? (
                   <PillButton
                     onClick={() => {

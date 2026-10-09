@@ -348,11 +348,8 @@ html {
     grid-column: 1 / span 2;
     grid-row: 1;
   }
-  /*
-   * Four columns, not three. At readable type the four view pills fill three
-   * columns exactly at the narrow end of desktop, which left MOOD sitting on
-   * top of ABOUT.
-   */
+  /* Four columns, not three: at readable type the pills need more room than
+     three columns give at the narrow end of desktop. */
   .nav-views {
     grid-column: 4 / span 5;
     grid-row: 1;
@@ -625,7 +622,7 @@ html {
 
 /* --------------------------------------------------- scrolling panes ---- */
 
-/* Index, list and mood are vertical reading surfaces inside the fixed frame. */
+/* The index is a vertical reading surface inside the fixed frame. */
 .pane {
   height: 100%;
   overflow-y: auto;

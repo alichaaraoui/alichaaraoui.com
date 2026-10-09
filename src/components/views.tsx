@@ -120,50 +120,8 @@ export function ReelView({ projects }: { projects: Project[] }) {
   return <DeskReel projects={projects} />;
 }
 
-/** A numbered table of contents. No images. */
+/** The written index: one row per project, with a thumbnail. */
 export function IndexView({ projects }: { projects: Project[] }) {
-  return (
-    <div className="pane">
-      <ol className="mx-auto max-w-3xl pb-8">
-        {projects.map((p, i) => (
-          <Row key={p.slug} project={p} index={i} />
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-function Row({ project, index }: { project: Project; index: number }) {
-  const body = (
-    <>
-      <span className="w-8 shrink-0 text-neutral-400">*{num(index)}</span>
-      <span className="flex-1 uppercase tracking-[0.08em]">{project.title}</span>
-      <span className="hidden flex-1 text-neutral-400 sm:block">{project.blurb}</span>
-      <span className="w-24 shrink-0 text-neutral-400">
-        {project.categories.join(", ")}
-      </span>
-      <span className="w-10 shrink-0 text-right text-neutral-400">{project.year}</span>
-    </>
-  );
-
-  const className =
-    "flex items-baseline gap-3 border-b border-[var(--rule)] py-2.5 text-[10px] leading-none transition-colors hover:bg-neutral-50";
-
-  return (
-    <li>
-      {project.href ? (
-        <a href={project.href} target="_blank" rel="noreferrer" className={className}>
-          {body}
-        </a>
-      ) : (
-        <div className={className}>{body}</div>
-      )}
-    </li>
-  );
-}
-
-/** Dense table with a thumbnail per row. */
-export function ListView({ projects }: { projects: Project[] }) {
   return (
     <div className="pane">
       <ul className="pb-8">
@@ -190,26 +148,6 @@ export function ListView({ projects }: { projects: Project[] }) {
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-/** Images only, tight. */
-export function MoodView({ projects }: { projects: Project[] }) {
-  return (
-    <div className="pane">
-      <div className="grid grid-cols-2 gap-2 pb-8 sm:grid-cols-4 md:grid-cols-6">
-        {projects.map((p) => (
-          <div key={p.slug} className="relative aspect-[6/7] overflow-hidden">
-            <Art
-              img={p.hero}
-              tone={p.tone}
-              alt={p.title}
-              sizes="(min-width: 768px) 16vw, 45vw"
-            />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

@@ -16,10 +16,10 @@ const SETTLE = 900;
    reads along with you. */
 const DEEP = 0.55;
 
-/* The views where the work covers the whole page. He has nowhere to stand in
-   those without sitting on top of somebody's project, and a mascot drawn over
+/* The view where the work covers the whole page. He has nowhere to stand in
+   it without sitting on top of somebody's project, and a mascot drawn over
    the work reads as a mistake rather than as company. */
-const CROWDED = ["grid", "mood"];
+const CROWDED = ["grid"];
 
 /**
  * Ali, in the corner, doing whatever the page is doing.
