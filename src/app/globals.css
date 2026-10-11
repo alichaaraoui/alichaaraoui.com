@@ -2053,65 +2053,62 @@ html {
 /* ----------------------------------------------------------- about ---- */
 
 /*
- * The about page is black and read from the bottom up: the writing starts a
- * whole screen below the top, so the page opens on nothing and then carries
- * itself up through the dark.
+ * The about page is a black sheet that rises from the bottom of the window.
  *
- * It is a page in normal flow, not the fixed frame the rest of the site uses,
- * because the roll drives the window's own scroll and there has to be a window
- * worth of scrolling to drive.
+ * The sheet is what moves; the writing is laid out on it and comes up with it.
+ * So the page itself stays the site's own white until the sheet covers it —
+ * painting it black up front is the one thing that would make the rise
+ * invisible.
  */
 .about {
-  background: #060606;
-  color: #f2f2f2;
+  position: relative;
   height: calc(100dvh - var(--nav-h));
   overflow: hidden;
 }
 
-/* The window the writing passes through. Nothing scrolls: the track is moved
-   by a transform, and anything outside this box is simply not drawn. */
-.about-stage {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-}
-
-.about-track {
+.about-sheet {
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  background: #060606;
+  color: #f2f2f2;
   will-change: transform;
 }
 
-.about-roll {
-  padding-inline: var(--gutter);
-  padding-block: 1px; /* contains the children's margins, so the measure is true */
+.about-inner {
+  width: 100%;
+  max-width: 62rem;
   margin-inline: auto;
-  max-width: 44rem;
+  padding-inline: var(--gutter);
+  display: grid;
+  gap: 2.5rem 4rem;
+  grid-template-columns: 1fr;
 }
 
-/* Reduced motion gets the same writing as a page that simply sits there. */
-.about-static {
-  height: auto;
-  min-height: calc(100dvh - var(--nav-h));
-  overflow: visible;
-}
-
-.about-stage-still {
-  height: auto;
-  padding-block: 4rem 6rem;
+@media (min-width: 900px) {
+  .about-inner {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+  }
 }
 
 .about-lead {
-  font-size: 15px;
-  line-height: 1.75;
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 46ch;
 }
 
 .about-block {
-  padding-top: 5.5rem;
+  padding-top: 2.25rem;
+}
+
+.about-col-side .about-block:first-child {
+  padding-top: 0;
 }
 
 .about-block h2 {
-  padding-bottom: 1rem;
+  padding-bottom: 0.75rem;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.11em;
@@ -2125,10 +2122,10 @@ html {
 .about-row {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.75rem 0;
+  gap: 0.25rem;
+  padding: 0.6rem 0;
   border-bottom: 1px solid rgb(255 255 255 / 0.14);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.3;
 }
 
@@ -2140,7 +2137,7 @@ html {
   }
 
   .about-when {
-    width: 5.5rem;
+    width: 5rem;
     flex-shrink: 0;
   }
 }
@@ -2158,7 +2155,7 @@ html {
 
 .about-list,
 .about-plain {
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.9;
   color: #c8c8c8;
 }
@@ -2172,43 +2169,30 @@ html {
   color: #fff;
 }
 
-/* The last thing up the screen. */
-.about-end {
-  padding-top: 9rem;
-  text-align: center;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: #6a6a6a;
-}
-
 /*
- * The nav, the footer and the mascot are rendered by the layout, outside the
- * page, so the page cannot colour them. The about page raises this flag on the
- * document instead, and these are the few things that have to flip.
+ * There is nothing to scroll: the page is exactly one screen.
  */
-html[data-dark],
-html[data-dark] body {
-  background: #060606;
-}
-
-/*
- * The site scrolls smoothly, which a roll cannot live with: every one-pixel
- * step would start its own smooth animation and the next frame would cancel
- * it, so the page crawls or stops dead. The roll is already continuous — it
- * does not need easing on top.
- */
-/* There is nothing to scroll: the roll is a transform inside a fixed window,
-   so the page is exactly one screen and the bar must not appear. */
-html[data-dark],
-html[data-dark] body {
+html[data-locked],
+html[data-locked] body {
   height: 100%;
   overflow: hidden;
 }
 
-/* The bar is painted by Tailwind's `bg-background`, and the theme is declared
-   `inline`, so that utility carries the literal white rather than a variable —
-   redefining the token cannot reach it, and the element has to be named. */
+/*
+ * The chrome catches up once the sheet has landed. It is rendered by the
+ * layout, outside the page, so only this flag can reach it — and it fades
+ * rather than cutting, so the arrival reads as one movement.
+ */
+html[data-dark] body {
+  background: #060606;
+}
+
+html[data-dark] header,
+html[data-dark] .pill,
+html[data-dark] .sitefooter {
+  transition: background-color 0.28s ease, color 0.28s ease;
+}
+
 html[data-dark] header {
   background: #060606;
 }
