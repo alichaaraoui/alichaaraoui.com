@@ -642,93 +642,6 @@ html {
 /* -------------------------------------------------------------- note ---- */
 
 /* A message in a grid box. Wider than one column, or it is unreadable. */
-/*
- * The introduction, dropped over the work: the same black slab as the about
- * and contact panels, so it belongs to the nav's language rather than
- * inventing a third one. One frame, no chrome — the close button is the only
- * thing on it, and it hangs off the corner.
- */
-.deskwrap {
-  position: relative;
-  height: 100%;
-}
-
-.card {
-  position: absolute;
-  top: var(--card-y, 12%);
-  left: var(--card-x, 6%);
-  z-index: 20;
-  width: min(27rem, 46vw);
-  padding: 1.6rem 1.7rem 1.7rem;
-  background: var(--color-foreground);
-  color: #fff;
-  font-family: var(--font-geist-mono), monospace;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  /* Hidden until measured and placed, or it flashes in the top-left corner. */
-  visibility: hidden;
-  animation: card-in 420ms var(--ease) both;
-}
-
-.card[data-placed] {
-  visibility: visible;
-}
-
-.card[data-held] {
-  cursor: grabbing;
-}
-
-@keyframes card-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    animation: none;
-  }
-}
-
-/* A tab off the top-right corner, in the same black as the box, so it reads as
-   part of it rather than as something dropped on top. */
-.card-shut {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  padding: 0.3rem 0.6rem 0.28rem;
-  background: var(--color-foreground);
-  color: #fff;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  line-height: 1;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: opacity 140ms ease;
-}
-
-.card-shut:hover {
-  opacity: 0.6;
-}
-
-/* Keyed to the dark ground: the statement's own colours assume paper. */
-.card .note-lead,
-.card .note-line {
-  color: #fff;
-}
-
-/* Separates the pieces of the statement, which the grid used to do by placing
-   them rows apart. */
-.card .note-body + .note-body {
-  margin-top: 1.15rem;
-}
 
 .note-body {
   padding-top: 0;
@@ -2066,18 +1979,33 @@ html {
   overflow: hidden;
 }
 
+/*
+ * Fixed to the whole window, not to the space under the nav: the sheet has to
+ * pass behind the bar for the handover to read as one movement. It sits below
+ * the nav and the mascot in the stack, so both stay on top of it and change
+ * colour as it goes by.
+ */
 .about-sheet {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 1;
   display: flex;
-  align-items: center;
+  /* NOT align-items: center. Centred flex items cannot be scrolled back to —
+     the overflow goes out of the top where there is no scroll to reach it —
+     and on a narrow window the writing is taller than the screen. Auto
+     margins centre it when it fits and give way when it does not. */
+  align-items: flex-start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: var(--nav-h);
   background: #060606;
   color: #f2f2f2;
   will-change: transform;
 }
 
 .about-inner {
+  margin-block: auto;
+  padding-block: 2rem;
   width: 100%;
   max-width: 62rem;
   margin-inline: auto;
@@ -2179,38 +2107,40 @@ html[data-locked] body {
 }
 
 /*
- * The chrome catches up once the sheet has landed. It is rendered by the
- * layout, outside the page, so only this flag can reach it — and it fades
- * rather than cutting, so the arrival reads as one movement.
+ * The chrome hands over WHILE the sheet is moving, not once it has landed.
+ *
+ * The nav, the wordmark and the mascot are rendered by the layout, outside the
+ * page, so the page cannot style them. It publishes their colours as custom
+ * properties instead, a frame at a time, and these rules spend them. Each gets
+ * its own slice of the rise, in the order the sheet reaches them going up the
+ * screen — which is what makes the black look like it passes over them rather
+ * than the page cutting colour underneath it.
  */
-html[data-dark] body {
+html[data-about] body {
   background: #060606;
 }
 
-html[data-dark] header,
-html[data-dark] .pill,
-html[data-dark] .sitefooter {
-  transition: background-color 0.28s ease, color 0.28s ease;
+html[data-about] header {
+  background: var(--nav-paper, #ffffff);
 }
 
-html[data-dark] header {
-  background: #060606;
+html[data-about] .pill {
+  background: var(--pill-paper, #0a0a0a);
+  color: var(--pill-ink, #ffffff);
 }
 
-html[data-dark] .pill {
-  background: #f2f2f2;
-  color: #0a0a0a;
+html[data-about] .pill:hover {
+  filter: brightness(0.82);
 }
 
-html[data-dark] .pill:hover {
-  background: #b4b4b4;
+html[data-about] .site-logo {
+  filter: invert(var(--logo-ink, 0));
 }
 
-html[data-dark] .site-logo,
-html[data-dark] .ali {
-  filter: invert(1);
+html[data-about] .ali {
+  filter: invert(var(--ali-ink, 0));
 }
 
-html[data-dark] .sitefooter {
+html[data-about] .sitefooter {
   color: #6a6a6a;
 }

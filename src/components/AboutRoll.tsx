@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useEffect } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
 
 const experience = [
   { year: "2025—", role: "Software Developer", org: "Omvra Studios" },
@@ -19,11 +26,31 @@ const tools = [
   "Power Platform",
 ];
 
-/* Long enough to be a move rather than a cut, and eased so it arrives without
-   a bump: almost all of the distance is covered early and the last stretch
-   settles. */
-const RISE = 1.05;
-const EASE = [0.16, 1, 0.3, 1] as const;
+/* Slow on purpose: the black is meant to be watched climbing the screen, not
+   to flick up. Eased so it arrives without a bump — most of the distance is
+   covered early and the last stretch settles. */
+const RISE = 1.9;
+/* Not an expo curve: that covers eighty per cent of the screen in the first
+   third of the time and then creeps, which reads as a flick followed by a
+   stall. This keeps an even pace most of the way and only softens at the
+   top. */
+const EASE = [0.33, 0.12, 0.2, 1] as const;
+
+/*
+ * When each piece of the chrome changes over, as a fraction of the rise.
+ *
+ * The sheet comes up from the bottom, so it reaches things in the order they
+ * sit on the screen: the mascot in the bottom corner almost at once, the nav
+ * at the top only at the end. Giving each its own window is what makes the
+ * black look like it is passing OVER them rather than the page cutting colour
+ * underneath it.
+ */
+const ALI_AT: [number, number] = [0.04, 0.18];
+const NAV_AT: [number, number] = [0.58, 0.94];
+const LOGO_AT: [number, number] = [0.78, 0.9];
+
+const setVar = (name: string, value: string) =>
+  document.documentElement.style.setProperty(name, value);
 
 /**
  * The about page: a black sheet that rises from the bottom of the window.
@@ -35,34 +62,67 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  */
 export function AboutRoll() {
   const still = useReducedMotion();
-  /* Raised when the sheet has arrived, not when the page mounts. The nav, the
-     footer and the mascot are rendered by the layout, outside this page, so
-     only a flag on the document can reach them — and darkening them up front
-     would paint the page black before the sheet got there, which is the one
-     thing that would make the rise invisible. */
-  const [landed, setLanded] = useState(false);
+
+  /*
+   * One value runs the whole arrival: 0 with the sheet below the window, 1
+   * with it fully up. The sheet reads it, and so does the chrome.
+   *
+   * The nav, the mascot and the wordmark are rendered by the layout, outside
+   * this page, so nothing here can style them directly — their colours go out
+   * as custom properties on the document and the stylesheet picks them up. It
+   * is the same trick as before, except these move every frame instead of
+   * switching once the sheet has already landed, which is what made the
+   * handover abrupt.
+   */
+  const rise = useMotionValue(still ? 1 : 0);
+  const y = useTransform(rise, [0, 1], ["100%", "0%"]);
+  const navPaper = useTransform(rise, NAV_AT, ["#ffffff", "#060606"]);
+  const pillPaper = useTransform(rise, NAV_AT, ["#0a0a0a", "#f2f2f2"]);
+  const pillInk = useTransform(rise, NAV_AT, ["#ffffff", "#0a0a0a"]);
+  /* A wordmark cannot be half inverted without going grey, so it turns over
+     quickly, and late — by then the sheet is already behind it. */
+  const logoInk = useTransform(rise, LOGO_AT, [0, 1]);
+  const aliInk = useTransform(rise, ALI_AT, [0, 1]);
+
+  /* Each derived value publishes itself, rather than one listener on `rise`
+     reading them all: a listener on the source runs BEFORE the values derived
+     from it recompute, so every property would be a frame behind — invisible
+     at sixty frames a second, and badly wrong at two. */
+  useMotionValueEvent(navPaper, "change", (v) => setVar("--nav-paper", v));
+  useMotionValueEvent(pillPaper, "change", (v) => setVar("--pill-paper", v));
+  useMotionValueEvent(pillInk, "change", (v) => setVar("--pill-ink", v));
+  useMotionValueEvent(logoInk, "change", (v) => setVar("--logo-ink", String(v)));
+  useMotionValueEvent(aliInk, "change", (v) => setVar("--ali-ink", String(v)));
 
   useEffect(() => {
-    document.documentElement.dataset.locked = "";
+    const r = document.documentElement;
+    r.dataset.about = "";
+    r.dataset.locked = "";
+    /* Paint the first frame before anything is shown, or the chrome flashes at
+       its resting colours for a frame. */
+    setVar("--nav-paper", navPaper.get());
+    setVar("--pill-paper", pillPaper.get());
+    setVar("--pill-ink", pillInk.get());
+    setVar("--logo-ink", String(logoInk.get()));
+    setVar("--ali-ink", String(aliInk.get()));
+
+    const run = still
+      ? null
+      : animate(rise, 1, { duration: RISE, ease: EASE });
+
     return () => {
-      delete document.documentElement.dataset.locked;
-      delete document.documentElement.dataset.dark;
+      run?.stop();
+      delete r.dataset.about;
+      delete r.dataset.locked;
+      for (const v of ["--nav-paper", "--pill-paper", "--pill-ink", "--logo-ink", "--ali-ink"]) {
+        r.style.removeProperty(v);
+      }
     };
-  }, []);
-
-  useEffect(() => {
-    if (landed || still) document.documentElement.dataset.dark = "";
-  }, [landed, still]);
+  }, [rise, still, navPaper, pillPaper, pillInk, logoInk, aliInk]);
 
   return (
     <main className="about">
-      <motion.div
-        className="about-sheet"
-        initial={still ? false : { y: "100%" }}
-        animate={{ y: 0 }}
-        transition={{ duration: still ? 0 : RISE, ease: EASE }}
-        onAnimationComplete={() => setLanded(true)}
-      >
+      <motion.div className="about-sheet" style={{ y }}>
         <div className="about-inner">
           <div className="about-col">
             <p className="about-lead">

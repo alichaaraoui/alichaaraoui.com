@@ -4,7 +4,6 @@ import { useCallback, useRef, type CSSProperties, type WheelEvent } from "react"
 import { Art } from "./Art";
 import { GridMarkers } from "./GridMarkers";
 import { NoteBody } from "./NoteTile";
-import { StatementCard } from "./StatementCard";
 import { DeskReel } from "./DeskReel";
 import { PhoneReel } from "./PhoneReel";
 import { PillButton } from "./Pill";
@@ -88,7 +87,6 @@ function DesktopStrip({ projects }: { projects: Project[] }) {
 
   return (
     <div className="deskwrap">
-      <StatementCard />
       <div ref={ref} onWheel={onWheel} className="strip">
         <div
           className="workgrid"
