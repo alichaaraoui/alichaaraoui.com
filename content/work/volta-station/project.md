@@ -5,6 +5,8 @@ category: architecture
 blurb: a train station as a retro-futurist landmark
 order: 12
 hero: 01-spread.webp
+# The grid and the reels show this instead of the title spread: a spread is
+# two pages wide and survives a portrait tile badly. Page 28 on its own.
 cover: cover.webp
 role: Design, modelling, renders
 stack: Rhino, Grasshopper, Illustrator
