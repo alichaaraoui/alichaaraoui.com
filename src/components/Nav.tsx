@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { PillButton } from "./Pill";
-import { AboutPanel } from "./AboutPanel";
 import { ContactPanel } from "./ContactPanel";
 import type { PanelName } from "./Panel";
 import { useIsPhone } from "@/lib/useIsPhone";
@@ -27,6 +26,7 @@ export function Nav() {
   const { view, category, go } = useRoute();
   const phone = useIsPhone();
   const pathname = usePathname();
+  const router = useRouter();
   const [entered] = useReelOpen();
   const [open, setOpen] = useState<Open>(null);
 
@@ -179,10 +179,10 @@ export function Nav() {
               {!phone && filter}
 
               <div className="nav-about flex items-center">
+                {/* A page of its own now, not a panel. */}
                 <PillButton
-                  active={open === "about"}
-                  expanded={open === "about"}
-                  onClick={() => toggle("about")}
+                  active={pathname === "/about"}
+                  onClick={() => router.push("/about")}
                 >
                   about
                 </PillButton>
@@ -204,7 +204,6 @@ export function Nav() {
 
       {onReel && <div className="nav-strip">{filter}</div>}
 
-      <AboutPanel open={open === "about"} />
       <ContactPanel open={open === "contact"} />
     </header>
   );

@@ -2049,3 +2049,156 @@ html {
     transition: none;
   }
 }
+
+/* ----------------------------------------------------------- about ---- */
+
+/*
+ * The about page is black and read from the bottom up: the writing starts a
+ * whole screen below the top, so the page opens on nothing and then carries
+ * itself up through the dark.
+ *
+ * It is a page in normal flow, not the fixed frame the rest of the site uses,
+ * because the roll drives the window's own scroll and there has to be a window
+ * worth of scrolling to drive.
+ */
+.about {
+  background: #060606;
+  color: #f2f2f2;
+  min-height: 100dvh;
+}
+
+.about-roll {
+  /* A screen of nothing above the first line, and room under the last so it
+     can reach the middle before the scroll runs out. */
+  padding-top: 100dvh;
+  padding-bottom: 62dvh;
+  padding-inline: var(--gutter);
+  margin-inline: auto;
+  max-width: 44rem;
+}
+
+.about-lead {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.about-block {
+  padding-top: 5.5rem;
+}
+
+.about-block h2 {
+  padding-bottom: 1rem;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #7a7a7a;
+}
+
+.about-block h2::before {
+  content: "*";
+}
+
+.about-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .about-row {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .about-when {
+    width: 5.5rem;
+    flex-shrink: 0;
+  }
+}
+
+.about-when,
+.about-where {
+  color: #8a8a8a;
+}
+
+.about-what {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.about-list,
+.about-plain {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #c8c8c8;
+}
+
+.about-plain a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.about-plain a:hover {
+  color: #fff;
+}
+
+/* The last thing up the screen. */
+.about-end {
+  padding-top: 9rem;
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #6a6a6a;
+}
+
+/*
+ * The nav, the footer and the mascot are rendered by the layout, outside the
+ * page, so the page cannot colour them. The about page raises this flag on the
+ * document instead, and these are the few things that have to flip.
+ */
+html[data-dark],
+html[data-dark] body {
+  background: #060606;
+}
+
+/*
+ * The site scrolls smoothly, which a roll cannot live with: every one-pixel
+ * step would start its own smooth animation and the next frame would cancel
+ * it, so the page crawls or stops dead. The roll is already continuous — it
+ * does not need easing on top.
+ */
+html[data-dark] {
+  scroll-behavior: auto;
+}
+
+/* The bar is painted by Tailwind's `bg-background`, and the theme is declared
+   `inline`, so that utility carries the literal white rather than a variable —
+   redefining the token cannot reach it, and the element has to be named. */
+html[data-dark] header {
+  background: #060606;
+}
+
+html[data-dark] .pill {
+  background: #f2f2f2;
+  color: #0a0a0a;
+}
+
+html[data-dark] .pill:hover {
+  background: #b4b4b4;
+}
+
+html[data-dark] .site-logo,
+html[data-dark] .ali {
+  filter: invert(1);
+}
+
+html[data-dark] .sitefooter {
+  color: #6a6a6a;
+}
