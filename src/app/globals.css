@@ -2064,17 +2064,41 @@ html {
 .about {
   background: #060606;
   color: #f2f2f2;
-  min-height: 100dvh;
+  height: calc(100dvh - var(--nav-h));
+  overflow: hidden;
+}
+
+/* The window the writing passes through. Nothing scrolls: the track is moved
+   by a transform, and anything outside this box is simply not drawn. */
+.about-stage {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.about-track {
+  position: absolute;
+  inset: 0 0 auto 0;
+  will-change: transform;
 }
 
 .about-roll {
-  /* A screen of nothing above the first line, and room under the last so it
-     can reach the middle before the scroll runs out. */
-  padding-top: 100dvh;
-  padding-bottom: 62dvh;
   padding-inline: var(--gutter);
+  padding-block: 1px; /* contains the children's margins, so the measure is true */
   margin-inline: auto;
   max-width: 44rem;
+}
+
+/* Reduced motion gets the same writing as a page that simply sits there. */
+.about-static {
+  height: auto;
+  min-height: calc(100dvh - var(--nav-h));
+  overflow: visible;
+}
+
+.about-stage-still {
+  height: auto;
+  padding-block: 4rem 6rem;
 }
 
 .about-lead {
@@ -2174,8 +2198,12 @@ html[data-dark] body {
  * it, so the page crawls or stops dead. The roll is already continuous — it
  * does not need easing on top.
  */
-html[data-dark] {
-  scroll-behavior: auto;
+/* There is nothing to scroll: the roll is a transform inside a fixed window,
+   so the page is exactly one screen and the bar must not appear. */
+html[data-dark],
+html[data-dark] body {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* The bar is painted by Tailwind's `bg-background`, and the theme is declared

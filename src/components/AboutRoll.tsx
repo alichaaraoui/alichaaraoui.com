@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { prefersReducedMotion } from "@/lib/transition";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 const experience = [
   { year: "2025—", role: "Software Developer", org: "Omvra Studios" },
@@ -19,136 +19,141 @@ const tools = [
   "Power Platform",
 ];
 
-/** Pixels a second. Slow enough to read, quick enough not to be a hostage. */
-const SPEED = 34;
-
-/** How long after you stop touching it before it takes itself up again. */
-const RESUME = 2200;
+/** Pixels a second. Slow enough to read without hurrying. */
+const SPEED = 26;
 
 /**
  * The about page: black, and read from the bottom up.
  *
- * The writing starts a whole screen below the top, so the page opens on
- * nothing, and then carries itself upward — credits, not a document. Any wheel,
- * key or touch takes it off you and hands it back a couple of seconds after you
- * stop; at the end it simply stops rather than looping back.
+ * The page does not scroll. The writing is one block translated up the screen
+ * by Framer Motion, from just under the bottom edge to just past the top, on a
+ * linear tween — a transform the compositor can run on its own, which is why
+ * it is smooth where driving the window's scroll a pixel at a time was not.
  *
- * It drives the window's own scroll rather than translating a track, so the
- * scrollbar, the keyboard and a trackpad all keep meaning what they mean.
+ * It loops, because a roll that ends on a page you cannot scroll leaves you
+ * staring at nothing with no way back to the top.
  */
 export function AboutRoll() {
-  const frame = useRef(0);
-  const last = useRef(0);
-  const held = useRef(0); // when the reader last intervened
-  const carry = useRef(0); // sub-pixel remainder, or slow speeds never move
+  const roll = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  /* Both ends of the journey, measured rather than guessed. `start` is the
+     bottom edge of the window the writing passes through — not 100vh, which is
+     a nav bar lower and leaves the screen empty for several seconds before the
+     first line arrives. `end` is the writing's own height, so the last line
+     clears the top. The two added together are what set the duration;
+     conflating them with either one runs it a whole screen too fast. */
+  const [{ start, end }, setRun] = useState({ start: 0, end: 0 });
+  const still = useReducedMotion();
 
-  const loop = useRef<() => void>(() => {});
-  const run = useCallback(() => {
-    const now = performance.now();
-    const dt = Math.min(0.1, (now - last.current) / 1000);
-    last.current = now;
-
-    const end = document.documentElement.scrollHeight - window.innerHeight;
-    if (now - held.current > RESUME && window.scrollY < end - 1) {
-      carry.current += SPEED * dt;
-      const step = Math.floor(carry.current);
-      if (step >= 1) {
-        carry.current -= step;
-        /* An absolute target, and instant: a relative scrollBy inherits the
-           page's smooth behaviour and the steps cancel one another out. */
-        window.scrollTo({ top: window.scrollY + step, behavior: "instant" });
-      }
-    }
-    frame.current = requestAnimationFrame(() => loop.current());
+  useEffect(() => {
+    const measure = () => {
+      const h = roll.current?.offsetHeight ?? 0;
+      setRun({ start: stage.current?.offsetHeight ?? 0, end: h });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (roll.current) ro.observe(roll.current);
+    if (stage.current) ro.observe(stage.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   useEffect(() => {
-    loop.current = run;
-  }, [run]);
-
-  useEffect(() => {
-    /* The nav, the footer and the mascot live outside this page, so the page
-       cannot colour them itself — the flag on the document is what lets the
-       stylesheet reach them. */
+    /* The nav, the footer and the mascot are rendered by the layout, outside
+       this page, so the page cannot colour them itself — the flag on the
+       document is what lets the stylesheet reach them. It also locks the
+       scroll, because there is nothing here to scroll. */
     document.documentElement.dataset.dark = "";
-    window.scrollTo(0, 0);
-
-    if (prefersReducedMotion()) return () => {
-      delete document.documentElement.dataset.dark;
-    };
-
-    const stall = () => {
-      held.current = performance.now();
-    };
-    for (const e of ["wheel", "touchstart", "keydown", "pointerdown"] as const) {
-      window.addEventListener(e, stall, { passive: true });
-    }
-
-    last.current = performance.now();
-    frame.current = requestAnimationFrame(() => loop.current());
-
     return () => {
       delete document.documentElement.dataset.dark;
-      for (const e of ["wheel", "touchstart", "keydown", "pointerdown"] as const) {
-        window.removeEventListener(e, stall);
-      }
-      if (frame.current) cancelAnimationFrame(frame.current);
-      frame.current = 0;
     };
   }, []);
+
+  const body = (
+    <div className="about-roll" ref={roll}>
+      <p className="about-lead">
+        I am reading Computer Science and Architecture at UNC Charlotte,
+        finishing in 2027. Most of what I build sits where those two meet —
+        generative geometry, tools that take a drawing problem and give it a
+        loop to run in, and the interfaces people actually use afterwards.
+        Looking for software and computational design work.
+      </p>
+
+      <section className="about-block">
+        <h2>Experience</h2>
+        {experience.map((e) => (
+          <div key={e.year} className="about-row">
+            <span className="about-when">{e.year}</span>
+            <span className="about-what">{e.role}</span>
+            <span className="about-where">{e.org}</span>
+          </div>
+        ))}
+      </section>
+
+      <section className="about-block">
+        <h2>Tools</h2>
+        <ul className="about-list">
+          {tools.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="about-block">
+        <h2>Education</h2>
+        <p className="about-plain">
+          UNC Charlotte
+          <br />
+          B.S. Computer Science
+          <br />
+          B.A. Architecture
+          <br />
+          2022—2027
+        </p>
+      </section>
+
+      <section className="about-block">
+        <h2>Résumé</h2>
+        <p className="about-plain">
+          <a href="/resume">Read it →</a>
+        </p>
+      </section>
+
+      <p className="about-end">Ali Chaaraoui</p>
+    </div>
+  );
+
+  /* Nothing moves for a reader who asked for nothing to move: the same writing,
+     laid out to be read as a page. */
+  if (still) {
+    return (
+      <main className="about about-static">
+        <div className="about-stage about-stage-still" ref={stage}>{body}</div>
+      </main>
+    );
+  }
 
   return (
     <main className="about">
-      <div className="about-roll">
-        <p className="about-lead">
-          I am reading Computer Science and Architecture at UNC Charlotte,
-          finishing in 2027. Most of what I build sits where those two meet —
-          generative geometry, tools that take a drawing problem and give it a
-          loop to run in, and the interfaces people actually use afterwards.
-          Looking for software and computational design work.
-        </p>
-
-        <section className="about-block">
-          <h2>Experience</h2>
-          {experience.map((e) => (
-            <div key={e.year} className="about-row">
-              <span className="about-when">{e.year}</span>
-              <span className="about-what">{e.role}</span>
-              <span className="about-where">{e.org}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="about-block">
-          <h2>Tools</h2>
-          <ul className="about-list">
-            {tools.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="about-block">
-          <h2>Education</h2>
-          <p className="about-plain">
-            UNC Charlotte
-            <br />
-            B.S. Computer Science
-            <br />
-            B.A. Architecture
-            <br />
-            2022—2027
-          </p>
-        </section>
-
-        <section className="about-block">
-          <h2>Résumé</h2>
-          <p className="about-plain">
-            <a href="/resume">Read it →</a>
-          </p>
-        </section>
-
-        <p className="about-end">Ali Chaaraoui</p>
+      <div className="about-stage" ref={stage}>
+        <motion.div
+          className="about-track"
+          /* Both ends named outright. Animating to a single value would loop
+             from wherever Framer thinks it started, which after a resize is
+             not the bottom of the window. */
+          animate={start ? { y: [start, -end] } : { y: "100vh" }}
+          transition={{
+            duration: (start + end) / SPEED,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "loop",
+          }}
+        >
+          {body}
+        </motion.div>
       </div>
     </main>
   );
