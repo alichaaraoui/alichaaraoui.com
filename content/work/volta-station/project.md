@@ -4,7 +4,7 @@ year: 2024
 category: architecture
 blurb: a train station as a retro-futurist landmark
 order: 12
-hero: 01-concourse.png
+hero: 01-spread.webp
 role: Design, modelling, renders
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3001, UNC Charlotte
@@ -20,7 +20,11 @@ as both a way into the city and somewhere to go in its own right. The
 concourse is sized for crowds but detailed for the minutes people actually
 spend in it.
 
-![the concourse](02-bar.png)
+![the station redefined: a gateway and a destination](02-spread.webp)
+
+![unrolled sections: ticketing, bar, travelator](03-spread.webp)
+
+![first floor and basement plans](04-spread.webp)
 
 Set in the spirit of the 1960s, the design is manipulated to evoke what
 retro-futurism might have looked like. Fusing futuristic form with nostalgic
@@ -31,6 +35,6 @@ blurs the boundary between past and future.
 
 ## Model
 
-![physical model](03-model.png)
+![the concourse, in neon](05-spread.webp)
 
-![model detail](04-model-detail.png)
+![the physical model](06-spread.webp)

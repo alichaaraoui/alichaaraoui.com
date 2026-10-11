@@ -4,7 +4,7 @@ import type { Category, Project } from "./types";
 export type { Category, GeneratedProject, Img, Project, Section } from "./types";
 
 export const CATEGORIES = ["software", "architecture"] as const;
-export const DEFAULT_CATEGORY: Category = "software";
+export const DEFAULT_CATEGORY: Category = "architecture";
 
 /**
  * Every project, compiled from content/work by scripts/build-content.mjs.

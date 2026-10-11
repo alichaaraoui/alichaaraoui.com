@@ -1708,6 +1708,20 @@ html {
   margin: 1.75em 0 2em;
 }
 
+/*
+ * A spread is two pages wide. Held to the text column it is a thumbnail of a
+ * portfolio page, which is useless — so from the width where the twelve-column
+ * grid exists, pictures break out across the three columns the prose does not
+ * use. They stop short of the right edge because the map is fixed over it.
+ */
+@media (min-width: 1024px) {
+  .prose figure,
+  .project-head .project-hero {
+    width: calc(100% + 3 * (var(--col-w) + var(--gap)));
+    max-width: calc(100vw - var(--gutter) - 4.4rem - 3 * (var(--col-w) + var(--gap)));
+  }
+}
+
 .prose figure img,
 .prose figure video {
   display: block;

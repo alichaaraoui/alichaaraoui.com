@@ -23,7 +23,7 @@ const readHash = () => window.location.hash;
 export function parseRoute(hash: string) {
   const [v, c] = hash.replace(/^#/, "").split("/");
   return {
-    view: isView(v) ? v : ("grid" as View),
+    view: isView(v) ? v : ("reel" as View),
     category: isCategory(c) ? c : DEFAULT_CATEGORY,
   };
 }

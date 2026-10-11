@@ -4,7 +4,7 @@ year: 2025
 category: architecture
 blurb: a filtration experience, built from wood studs
 order: 13
-hero: 01-pavilion.png
+hero: 01-spread.webp
 role: Design, fabrication, drawings
 stack: Rhino, Grasshopper, Timber
 status: Studio 4001, UNC Charlotte
@@ -22,11 +22,17 @@ MOF — a metal-organic framework — is not only a scientific structure but a
 way of thinking, about filtration, connectivity, and the subtle forces that
 shape both matter and experience.
 
-![the unit, and what it filters](02-unit.png)
+![what a MOF is, and why it filters](03-spread.webp)
+
+![iterations, phase to phase](04-spread.webp)
+
+![the unit: copied, mirrored, grown, rotated, filtered](05-spread.webp)
+
+![the chemistry within](06-spread.webp)
 
 ## Growing the structure
 
-![the pavilion in iso](03-iso.png)
+![the pavilion, built](07-spread.webp)
 
 The morphosis of the pop-up museum starts with a single unit, then copied
 and mirrored, grown and expanded, rotated and finally filtered — mimicking
@@ -34,7 +40,7 @@ the way MOFs grow and are used.
 
 ## Five programmes
 
-![sit, demo, display, shade, museum](04-phases.png)
+![sit, demo, display, shade, museum](02-spread.webp)
 
 Across five project phases we developed a design language and a technique
 using wood studs, producing different programmatic installations all

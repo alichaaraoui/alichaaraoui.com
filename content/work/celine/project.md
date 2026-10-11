@@ -4,7 +4,7 @@ year: 2025
 category: architecture
 blurb: a theater that crumples
 order: 10
-hero: 01-model.png
+hero: 01-spread.webp
 role: Design, drawings, model
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3002, UNC Charlotte
@@ -21,7 +21,7 @@ complexity. Crumpling established a formal vocabulary first, and the spatial
 and architectural development followed from it rather than the other way
 round.
 
-![folded surfaces becoming self-supporting volumes](05-assembly.png)
+![crumpled surfaces becoming self-supporting volumes](02-spread.webp)
 
 Translating that logic into spatial and structural systems meant bridging,
 multiplying and extending surfaces, relying on dry connections and
@@ -31,7 +31,7 @@ hold themselves up.
 
 ## Section
 
-![the section through lobby, stages, gallery and rooftop bar](03-section.png)
+![the section: lobby, stages, gallery, rooftop bar](03-spread.webp)
 
 Lifts and folds create thresholds and clear entryways, so circulation reads
 as choreographed. Nested inside the crumplings, space is carved for
@@ -39,11 +39,10 @@ performance at every scale, from intimate rooms to the grand stage. The
 building becomes both stage and scenography: every fold directs, every lift
 frames, every nest houses.
 
-![plans and elevations](02-plans.png)
 
 ## Inside
 
-![interiors](04-interiors.png)
+![interiors, and the steel skeleton under them](04-spread.webp)
 
 Set against the 1960s original — a house for black-box movies and celebrity
 acts — this is an argument about what a theater might be next.

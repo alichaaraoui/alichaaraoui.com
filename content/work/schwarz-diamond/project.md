@@ -4,7 +4,7 @@ year: 2025
 category: architecture
 blurb: a minimal surface relaxed into a lattice
 order: 14
-hero: 01-lattice.png
+hero: 01-spread.webp
 role: Computational design
 stack: Rhino, Grasshopper, Kangaroo Physics
 status: UNC Charlotte
@@ -21,11 +21,11 @@ simulations let the geometry settle into a continuous minimal surface — one
 that holds its shape because of how it is relaxed, not because it was
 modelled that way.
 
-![mirrored quad panels](02-panels.png)
+![the surface, deconstructed into coded strips](02-spread.webp)
 
 ## Aggregation
 
-![the lattice, aggregated](03-aggregation.png)
+![identifying the coded strips](03-spread.webp)
 
 Once the unit resolves, it aggregates. The result is a smooth spatial
 lattice capable of variation and, with the panelisation resolved, of

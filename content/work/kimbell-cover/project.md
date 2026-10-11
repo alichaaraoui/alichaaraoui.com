@@ -4,7 +4,7 @@ year: 2024
 category: architecture
 blurb: the kimbell, stretched into a kit of parts
 order: 11
-hero: 01-taxonomy.png
+hero: 01-spread.webp
 role: Design, modelling, renders
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3001, UNC Charlotte
@@ -22,11 +22,10 @@ of a large shed. The question the project asks is how far that original can
 be stretched, carved and covered before it becomes something entirely new —
 a precedent of its own.
 
-![the taxonomy of parts](04-variations.png)
+![the taxonomy of parts, deployed at the scale of a shuttle stop](02-spread.webp)
 
 ## A kit of parts
 
-![components, carved and recomposed](02-parts.png)
 
 At the scale of a shuttle stop the transformation begins. Elements are
 deployed, repeated and re-assembled into a taxonomy: roof planes, columns,
@@ -37,7 +36,7 @@ familiar yet re-contextualised through repetition and variation.
 
 ## Tectonics
 
-![thresholds between structure and space](03-tectonics.png)
+![the cover: thresholds between structure and space](03-spread.webp)
 
 The Kimbell's spans are elongated, widened and stretched as the vaults are
 cut, curved and re-joined; re-scaled and re-proportioned into tectonic
