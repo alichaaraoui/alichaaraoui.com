@@ -1,14 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotion,
-  useTransform,
-} from "motion/react";
+import { useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 const experience = [
   { year: "2025—", role: "Software Developer", org: "Omvra Studios" },
@@ -52,77 +45,91 @@ const LOGO_AT: [number, number] = [0.78, 0.9];
 const setVar = (name: string, value: string) =>
   document.documentElement.style.setProperty(name, value);
 
-/**
- * The about page: a black sheet that rises from the bottom of the window.
- *
- * The sheet is what moves. The writing is laid out on it and comes up with it,
- * rather than travelling across it — so the page arrives as one object and
- * then holds still. Nothing scrolls: it is one screen, and the stylesheet
- * locks the document while this page is mounted.
- */
+const CHROME_VARS = ["--nav-paper", "--pill-paper", "--pill-ink", "--logo-ink", "--ali-ink"];
+
+const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
+
+/** Where a value sits inside its own window of the climb. */
+const at = (p: number, [a, b]: [number, number]) => clamp01((p - a) / (b - a));
+
+/** Straight mix between two #rrggbb, as an rgb() string. */
+const mix = (from: string, to: string, t: number) => {
+  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [r1, g1, b1] = hex(from);
+  const [r2, g2, b2] = hex(to);
+  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgb(${c(r1, r2)}, ${c(g1, g2)}, ${c(b1, b2)})`;
+};
+
+/** Paint the chrome for a given point in the climb. */
+function paintChrome(p: number) {
+  const nav = at(p, NAV_AT);
+  setVar("--nav-paper", mix("#ffffff", "#060606", nav));
+  setVar("--pill-paper", mix("#0a0a0a", "#f2f2f2", nav));
+  setVar("--pill-ink", mix("#ffffff", "#0a0a0a", nav));
+  setVar("--logo-ink", String(at(p, LOGO_AT)));
+  setVar("--ali-ink", String(at(p, ALI_AT)));
+}
+
 export function AboutRoll() {
   const still = useReducedMotion();
+  const sheet = useRef<HTMLDivElement>(null);
 
   /*
-   * One value runs the whole arrival: 0 with the sheet below the window, 1
-   * with it fully up. The sheet reads it, and so does the chrome.
+   * The chrome follows where the black actually IS, measured every frame off
+   * the sheet itself, rather than off a value the animation is supposed to be
+   * driving. The nav, the wordmark and the mascot are rendered by the layout,
+   * outside this page, so nothing here can style them directly — their
+   * colours go out as custom properties and the stylesheet spends them.
    *
-   * The nav, the mascot and the wordmark are rendered by the layout, outside
-   * this page, so nothing here can style them directly — their colours go out
-   * as custom properties on the document and the stylesheet picks them up. It
-   * is the same trick as before, except these move every frame instead of
-   * switching once the sheet has already landed, which is what made the
-   * handover abrupt.
+   * Reading the element was not the first approach. Driving a motion value
+   * imperatively and deriving the colours from it works in development and
+   * silently does nothing in the production bundle: the sheet sat off the
+   * bottom of the screen and the only black on the page was the body behind
+   * it. Measuring cannot drift from what is on screen, because it is what is
+   * on screen.
    */
-  const rise = useMotionValue(still ? 1 : 0);
-  const y = useTransform(rise, [0, 1], ["100%", "0%"]);
-  const navPaper = useTransform(rise, NAV_AT, ["#ffffff", "#060606"]);
-  const pillPaper = useTransform(rise, NAV_AT, ["#0a0a0a", "#f2f2f2"]);
-  const pillInk = useTransform(rise, NAV_AT, ["#ffffff", "#0a0a0a"]);
-  /* A wordmark cannot be half inverted without going grey, so it turns over
-     quickly, and late — by then the sheet is already behind it. */
-  const logoInk = useTransform(rise, LOGO_AT, [0, 1]);
-  const aliInk = useTransform(rise, ALI_AT, [0, 1]);
-
-  /* Each derived value publishes itself, rather than one listener on `rise`
-     reading them all: a listener on the source runs BEFORE the values derived
-     from it recompute, so every property would be a frame behind — invisible
-     at sixty frames a second, and badly wrong at two. */
-  useMotionValueEvent(navPaper, "change", (v) => setVar("--nav-paper", v));
-  useMotionValueEvent(pillPaper, "change", (v) => setVar("--pill-paper", v));
-  useMotionValueEvent(pillInk, "change", (v) => setVar("--pill-ink", v));
-  useMotionValueEvent(logoInk, "change", (v) => setVar("--logo-ink", String(v)));
-  useMotionValueEvent(aliInk, "change", (v) => setVar("--ali-ink", String(v)));
-
   useEffect(() => {
-    const r = document.documentElement;
-    r.dataset.about = "";
-    r.dataset.locked = "";
-    /* Paint the first frame before anything is shown, or the chrome flashes at
-       its resting colours for a frame. */
-    setVar("--nav-paper", navPaper.get());
-    setVar("--pill-paper", pillPaper.get());
-    setVar("--pill-ink", pillInk.get());
-    setVar("--logo-ink", String(logoInk.get()));
-    setVar("--ali-ink", String(aliInk.get()));
+    const root = document.documentElement;
+    root.dataset.about = "";
+    root.dataset.locked = "";
+    paintChrome(still ? 1 : 0);
+    if (still) return () => {
+      delete root.dataset.about;
+      delete root.dataset.locked;
+      for (const v of CHROME_VARS) root.style.removeProperty(v);
+    };
 
-    const run = still
-      ? null
-      : animate(rise, 1, { duration: RISE, ease: EASE });
+    let frame = 0;
+    const follow = () => {
+      const el = sheet.current;
+      if (el) {
+        const top = el.getBoundingClientRect().top;
+        paintChrome(clamp01(1 - top / Math.max(1, window.innerHeight)));
+      }
+      frame = requestAnimationFrame(follow);
+    };
+    frame = requestAnimationFrame(follow);
 
     return () => {
-      run?.stop();
-      delete r.dataset.about;
-      delete r.dataset.locked;
-      for (const v of ["--nav-paper", "--pill-paper", "--pill-ink", "--logo-ink", "--ali-ink"]) {
-        r.style.removeProperty(v);
-      }
+      cancelAnimationFrame(frame);
+      delete root.dataset.about;
+      delete root.dataset.locked;
+      for (const v of CHROME_VARS) root.style.removeProperty(v);
     };
-  }, [rise, still, navPaper, pillPaper, pillInk, logoInk, aliInk]);
+  }, [still]);
 
   return (
     <main className="about">
-      <motion.div className="about-sheet" style={{ y }}>
+      <motion.div
+        ref={sheet}
+        className="about-sheet"
+        /* Declarative, not an imperative animate() on a motion value: the
+           latter does not run once the bundle is built. */
+        initial={still ? false : { y: "100%" }}
+        animate={{ y: 0 }}
+        transition={{ duration: still ? 0 : RISE, ease: EASE }}
+      >
         <div className="about-inner">
           <div className="about-col">
             <p className="about-lead">
