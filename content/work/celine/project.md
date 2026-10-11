@@ -5,6 +5,7 @@ category: architecture
 blurb: a theater that crumples
 order: 10
 hero: 01-spread.webp
+cover: cover.webp
 role: Design, drawings, model
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3002, UNC Charlotte

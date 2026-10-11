@@ -45,7 +45,7 @@ export function ProjectTile({
     "--col": col,
     "--row": row,
     "--tile-cols": span,
-    "--ar": project.ratio.toFixed(4),
+    "--ar": project.coverRatio.toFixed(4),
   } as CSSProperties;
 
   return (
@@ -73,7 +73,7 @@ export function ProjectTile({
         }}
       >
         <Art
-          img={project.hero}
+          img={project.cover}
           tone={project.tone}
           alt={project.title}
           // Two to four columns at rest, --grow-w (max 32rem) hovered.

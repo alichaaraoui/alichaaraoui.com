@@ -5,6 +5,7 @@ category: architecture
 blurb: a minimal surface relaxed into a lattice
 order: 14
 hero: 01-spread.webp
+cover: cover.webp
 role: Computational design
 stack: Rhino, Grasshopper, Kangaroo Physics
 status: UNC Charlotte

@@ -5,6 +5,7 @@ category: architecture
 blurb: the kimbell, stretched into a kit of parts
 order: 11
 hero: 01-spread.webp
+cover: cover.webp
 role: Design, modelling, renders
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3001, UNC Charlotte

@@ -190,7 +190,7 @@ export function PhoneReel({ projects }: { projects: Project[] }) {
 
               <span className="reel-art">
                 <Art
-                  img={p.hero}
+                  img={p.cover}
                   tone={p.tone}
                   alt={p.title}
                   sizes="90vw"

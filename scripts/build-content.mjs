@@ -398,8 +398,16 @@ async function readProject(slug) {
   }
   const body = lines.join("\n");
 
+  // The cover stands in for the project on the index and in the reels. It is
+  // its own picture, not a page of the project, so it stays out of the gallery.
+  let cover = null;
+  if (data.cover) {
+    if (files.includes(data.cover)) cover = await processMedia(slug, data.cover, produced);
+    else console.warn(`  ! ${slug}: cover "${data.cover}" is not in the folder`);
+  }
+
   const images = [];
-  const listed = files.filter((f) => !inline.has(f));
+  const listed = files.filter((f) => !inline.has(f) && f !== data.cover);
   for (const file of listed) {
     const img = await processMedia(slug, file, produced);
     if (img) images.push(img);
@@ -459,6 +467,10 @@ async function readProject(slug) {
     ratio: Number(ratio.toFixed(4)),
     order: data.order === undefined ? 999 : Number(data.order),
     hero,
+    cover: cover ?? hero,
+    coverRatio: Number(
+      (cover ? cover.width / cover.height : ratio).toFixed(4)
+    ),
     gallery,
     sections: toSections(body),
   };

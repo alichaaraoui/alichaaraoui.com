@@ -5,6 +5,7 @@ category: architecture
 blurb: a train station as a retro-futurist landmark
 order: 12
 hero: 01-spread.webp
+cover: cover.webp
 role: Design, modelling, renders
 stack: Rhino, Grasshopper, Illustrator
 status: Studio 3001, UNC Charlotte

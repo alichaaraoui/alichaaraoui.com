@@ -391,7 +391,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
             <span className="dreel-frame">
               <span className="dreel-art">
                 <Art
-                  img={p.hero}
+                  img={p.cover}
                   tone={p.tone}
                   alt={p.title}
                   sizes="40vw"

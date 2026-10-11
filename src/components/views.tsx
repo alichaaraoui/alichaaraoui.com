@@ -130,7 +130,7 @@ export function IndexView({ projects }: { projects: Project[] }) {
             <div className="flex items-center gap-4 py-2">
               <span className="w-8 shrink-0 text-[10px] text-neutral-400">*{num(i)}</span>
               <div className="relative h-10 w-9 shrink-0 overflow-hidden">
-                <Art img={p.hero} tone={p.tone} alt="" sizes="36px" playAbove={120} />
+                <Art img={p.cover} tone={p.tone} alt="" sizes="36px" playAbove={120} />
               </div>
               <span className="flex-1 text-[10px] uppercase tracking-[0.08em]">
                 {p.title}

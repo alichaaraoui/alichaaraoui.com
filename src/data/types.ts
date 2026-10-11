@@ -58,6 +58,11 @@ export interface GeneratedProject {
   ratio: number;
   order: number;
   hero: Img | null;
+  /** What stands for the project on the index and in the reels. The hero
+      unless the frontmatter names a separate `cover`. */
+  cover: Img | null;
+  /** Width / height of the cover. */
+  coverRatio: number;
   gallery: Img[];
   sections: Section[];
 }

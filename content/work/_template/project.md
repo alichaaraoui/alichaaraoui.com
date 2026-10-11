@@ -11,6 +11,7 @@ order: 50                     # lower numbers come first in the grid
 # Optional
 # href: https://example.com   # adds a "Visit" link
 # hero: 02-whatever.jpg       # defaults to the first image alphabetically
+# cover: cover.jpg            # what the index and reels show; defaults to the hero
 # aspect: landscape           # portrait | tall | landscape | square
 #                             # only needed when there are no images yet
 role: Your role

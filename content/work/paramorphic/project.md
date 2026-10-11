@@ -5,6 +5,7 @@ category: architecture
 blurb: a filtration experience, built from wood studs
 order: 13
 hero: 01-spread.webp
+cover: cover.webp
 role: Design, fabrication, drawings
 stack: Rhino, Grasshopper, Timber
 status: Studio 4001, UNC Charlotte
