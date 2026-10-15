@@ -6,6 +6,7 @@ blurb: an ai back office for advisors
 order: 0
 href: https://main.d1ci8xrur0a8sr.amplifyapp.com
 hero: 01-dashboard.mp4
+cover: cover.webp
 role: Financials, approvals, Ask
 stack: Python, Lambda, Step Functions, DynamoDB, Bedrock
 status: LPL Financial Hackathon, 2026

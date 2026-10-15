@@ -6,6 +6,7 @@ blurb: a website for a student-run design studio
 order: 0.5
 href: https://alichaaraoui.github.io/studio49/
 hero: 01-landing.webm
+cover: cover.webp
 role: Leadership, design and build
 stack: HTML, CSS, JavaScript, Motion, GitHub Pages
 status: Live, 2026
