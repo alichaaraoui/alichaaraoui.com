@@ -66,7 +66,7 @@ export const notes: Note[] = [
   {
     id: "off",
     lines: [
-      "Tennis player, movie lover, and *professional online shopper*.",
+      "Tennis player and *movie lover*.",
       "Probably planning my *next trip* right now.",
     ],
   },
