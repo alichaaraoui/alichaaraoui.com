@@ -8,6 +8,8 @@
 }
 
 :root {
+  /* The mascot's width, shared with the project slab that has to clear him. */
+  --ali-w: clamp(190px, 19vw, 280px);
   --gutter: 1.5rem;
   --gap: 0.5rem;
 
@@ -1217,6 +1219,15 @@ html {
   display: flex;
   align-items: center;
   padding-right: 1.5rem;
+  /* Ali sits in this same corner, so the slab is centred in what is left
+     above him rather than over the top of him. */
+  padding-bottom: var(--ali-room, 0px);
+}
+
+@media (min-width: 1024px) {
+  .project-aside {
+    --ali-room: calc(var(--ali-w) * 693 / 902 + 2.2rem + 1rem);
+  }
 }
 
 .aside-box {
@@ -1225,7 +1236,7 @@ html {
      the fallback for the moment before it lands, and for a very tall image. */
   max-height: min(
     var(--hero-h, 60vh),
-    calc(100dvh - var(--nav-h) - 3rem)
+    calc(100dvh - var(--nav-h) - 3rem - var(--ali-room, 0px))
   );
   overflow-y: auto;
   scrollbar-width: none;
@@ -1915,7 +1926,7 @@ html {
   left: calc(var(--gutter) - 1rem);
   bottom: 2.2rem;
   z-index: 15;
-  width: clamp(190px, 19vw, 280px);
+  width: var(--ali-w);
   aspect-ratio: 902 / 693;
   pointer-events: none;
   animation: ali-float 7s ease-in-out infinite alternate;
@@ -2143,4 +2154,9 @@ html[data-about] .ali {
 
 html[data-about] .sitefooter {
   color: #6a6a6a;
+}
+
+/* QuietLink drops the href, and with it the browser's pointer cursor. */
+a[role="link"] {
+  cursor: pointer;
 }

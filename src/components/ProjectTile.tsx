@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import Link from "next/link";
+import { QuietLink } from "./QuietLink";
 import { Art } from "./Art";
 import { play } from "@/lib/audio";
 import { handOver, prefersReducedMotion, veilIndex } from "@/lib/transition";
@@ -50,8 +50,8 @@ export function ProjectTile({
 
   return (
     <figure className="tile" data-x={x} data-y={y} style={style}>
-      <Link
-        href={href}
+      <QuietLink
+        to={href}
         className="tile-fig"
         onPointerEnter={(e) => {
           if (e.pointerType === "mouse") play("project");
@@ -79,7 +79,7 @@ export function ProjectTile({
           // Two to four columns at rest, --grow-w (max 32rem) hovered.
           sizes="(min-width: 768px) 32rem, 70vw"
         />
-      </Link>
+      </QuietLink>
       <figcaption className="tile-cap text-[9px] uppercase leading-tight tracking-[0.08em]">
         {project.title} <span className="text-neutral-400">/ {project.year}</span>
         <span className="block text-neutral-400">{project.blurb}</span>

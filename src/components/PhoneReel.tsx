@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import Link from "next/link";
+import { QuietLink } from "./QuietLink";
 import { Art } from "./Art";
 import { play } from "@/lib/audio";
 import { handOver, prefersReducedMotion, veilIndex } from "@/lib/transition";
@@ -162,9 +162,9 @@ export function PhoneReel({ projects }: { projects: Project[] }) {
     <div className="reel" ref={reel}>
       <div className="reel-stage">
         {projects.map((p, i) => (
-          <Link
+          <QuietLink
             key={p.slug}
-            href={`/work/${p.slug}/${hash}`}
+            to={`/work/${p.slug}/${hash}`}
             className="reel-item"
             ref={(el) => {
               items.current[i] = el;
@@ -210,7 +210,7 @@ export function PhoneReel({ projects }: { projects: Project[] }) {
                 <span className="reel-year">{p.year}</span>
               </span>
             </span>
-          </Link>
+          </QuietLink>
         ))}
       </div>
 

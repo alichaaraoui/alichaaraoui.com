@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { WheelEvent as ReactWheelEvent } from "react";
-import Link from "next/link";
+import { QuietLink } from "./QuietLink";
 import { Art } from "./Art";
 import { play } from "@/lib/audio";
 import { handOver, prefersReducedMotion, veilIndex } from "@/lib/transition";
@@ -350,9 +350,9 @@ export function DeskReel({ projects }: { projects: Project[] }) {
     >
       <div className="dreel-row">
         {ring.map(({ p, key }, i) => (
-          <Link
+          <QuietLink
             key={key}
-            href={`/work/${p.slug}/${hash}`}
+            to={`/work/${p.slug}/${hash}`}
             className="dreel-item"
             ref={(el) => {
               items.current[i] = el;
@@ -407,7 +407,7 @@ export function DeskReel({ projects }: { projects: Project[] }) {
             </span>
 
             <span className="dreel-title">{p.title}</span>
-          </Link>
+          </QuietLink>
         ))}
       </div>
     </div>
