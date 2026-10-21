@@ -1977,183 +1977,252 @@ html {
 /* ----------------------------------------------------------- about ---- */
 
 /*
- * The about page is a black sheet that rises from the bottom of the window.
- *
- * The sheet is what moves; the writing is laid out on it and comes up with it.
- * So the page itself stays the site's own white until the sheet covers it —
- * painting it black up front is the one thing that would make the rise
- * invisible.
+ * A grey page, one loud colour. The red carries the personal list and the
+ * statement; everything else is small black type in columns, and the class
+ * year sits behind the drawing of him in white.
  */
+html[data-about] {
+  --about-paper: #ededeb;
+  --about-ink: #111111;
+  --about-dim: #8a8a87;
+  --about-red: #f0453a;
+}
+
+html[data-about] body,
+html[data-about] header {
+  background: var(--about-paper);
+}
+
+/* He is already sitting in the middle of the page. */
+html[data-about] .ali {
+  display: none;
+}
+
 .about {
-  position: relative;
-  height: calc(100dvh - var(--nav-h));
+  min-height: calc(100dvh - var(--nav-h));
+  padding: 2rem var(--gutter) 3rem;
+  color: var(--about-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.about-dim {
+  color: var(--about-dim);
+}
+
+.about-top {
+  display: grid;
+  gap: 2rem;
+}
+
+.about-meta {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.about-intro {
+  max-width: 34ch;
+}
+
+.about-facts {
+  color: var(--about-red);
+  font-size: clamp(1.25rem, 2.55vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+/* Each line rises out of its own slot, so it needs something to be hidden by. */
+.about-facts li,
+.about-num {
+  display: block;
   overflow: hidden;
 }
 
-/*
- * Fixed to the whole window, not to the space under the nav: the sheet has to
- * pass behind the bar for the handover to read as one movement. It sits below
- * the nav and the mascot in the stack, so both stay on top of it and change
- * colour as it goes by.
- */
-.about-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  /* NOT align-items: center. Centred flex items cannot be scrolled back to —
-     the overflow goes out of the top where there is no scroll to reach it —
-     and on a narrow window the writing is taller than the screen. Auto
-     margins centre it when it fits and give way when it does not. */
-  align-items: flex-start;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-top: var(--nav-h);
-  background: #060606;
-  color: #f2f2f2;
-  will-change: transform;
+.about-facts li > span,
+.about-num > span {
+  display: inline-block;
 }
 
-.about-inner {
-  margin-block: auto;
-  padding-block: 2rem;
-  width: 100%;
-  max-width: 62rem;
-  margin-inline: auto;
-  padding-inline: var(--gutter);
+.about-year {
+  position: relative;
   display: grid;
-  gap: 2.5rem 4rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
+  margin-block: 2.5rem 2.5rem;
 }
 
-@media (min-width: 900px) {
-  .about-inner {
-    grid-template-columns: minmax(0, 1fr) 15rem;
+.about-num {
+  grid-row: 2;
+  color: #ffffff;
+  font-size: clamp(7rem, 36vw, 22rem);
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: -0.06em;
+  /* Room for the digits to rise without clipping the tops. */
+  padding-top: 0.04em;
+}
+
+.about-num-right {
+  text-align: right;
+}
+
+.about-and {
+  grid-row: 1;
+  grid-column: 1;
+  margin-bottom: 0.5rem;
+  color: var(--about-red);
+  font-size: clamp(0.9rem, 1.7vw, 1.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* On a phone he sits in front of the year, overlapping its lower half. */
+.about-ali {
+  position: relative;
+  z-index: 1;
+  grid-row: 3;
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(72vw, 340px);
+  height: auto;
+  margin-top: -16vw;
+  /* The drawing is on white; multiply drops the white into the grey. */
+  mix-blend-mode: multiply;
+}
+
+@media (min-width: 1000px) {
+  .about-year {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-block: 1rem 2rem;
+  }
+
+  .about-num {
+    grid-row: 1;
+    font-size: clamp(7rem, 24vw, 22rem);
+  }
+
+  .about-num-right {
+    grid-column: 3;
+  }
+
+  .about-and {
+    grid-row: 1;
+    grid-column: 3;
+    align-self: center;
+    justify-self: start;
+    z-index: 1;
+    margin: 0;
+  }
+
+  .about-ali {
+    grid-row: 1;
+    grid-column: 2;
+    width: clamp(150px, 22vw, 340px);
+    margin: 0;
   }
 }
 
-.about-lead {
-  font-size: 14px;
-  line-height: 1.8;
-  max-width: 46ch;
+.about-cols {
+  display: grid;
+  gap: 2.25rem 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.about-block {
-  padding-top: 2.25rem;
+.about-cols h2 {
+  margin-bottom: 1.1rem;
+  color: var(--about-dim);
+  font-size: 12.5px;
+  font-weight: 400;
 }
 
-.about-col-side .about-block:first-child {
-  padding-top: 0;
+.about-h2-gap {
+  margin-top: 1.75rem;
 }
 
-.about-block h2 {
-  padding-bottom: 0.75rem;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: #7a7a7a;
-}
-
-.about-block h2::before {
-  content: "*";
-}
-
-.about-row {
+.about-exp {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid rgb(255 255 255 / 0.14);
-  font-size: 10px;
-  line-height: 1.3;
+  margin-bottom: 0.45rem;
 }
 
-@media (min-width: 640px) {
-  .about-row {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 1rem;
-  }
-
-  .about-when {
-    width: 5rem;
-    flex-shrink: 0;
-  }
+.about-when {
+  white-space: nowrap;
 }
 
-.about-when,
-.about-where {
-  color: #8a8a8a;
-}
-
-.about-what {
-  flex: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.about-list,
-.about-plain {
-  font-size: 10px;
-  line-height: 1.9;
-  color: #c8c8c8;
-}
-
-.about-plain a {
+.about-link {
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-underline-offset: 3px;
 }
 
-.about-plain a:hover {
-  color: #fff;
+.about-link:hover {
+  color: var(--about-red);
 }
 
-/*
- * There is nothing to scroll: the page is exactly one screen.
- */
-html[data-locked],
-html[data-locked] body {
-  height: 100%;
-  overflow: hidden;
+.about-statement {
+  grid-column: 1 / -1;
+  color: var(--about-red);
+  font-size: clamp(1.5rem, 2.55vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
 }
 
-/*
- * The chrome hands over WHILE the sheet is moving, not once it has landed.
- *
- * The nav, the wordmark and the mascot are rendered by the layout, outside the
- * page, so the page cannot style them. It publishes their colours as custom
- * properties instead, a frame at a time, and these rules spend them. Each gets
- * its own slice of the rise, in the order the sheet reaches them going up the
- * screen — which is what makes the black look like it passes over them rather
- * than the page cutting colour underneath it.
- */
-html[data-about] body {
-  background: #060606;
-}
+@media (min-width: 1000px) {
+  .about {
+    padding-top: 2.5rem;
+  }
 
-html[data-about] header {
-  background: var(--nav-paper, #ffffff);
-}
+  .about-top {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--gap);
+  }
 
-html[data-about] .pill {
-  background: var(--pill-paper, #0a0a0a);
-  color: var(--pill-ink, #ffffff);
-}
+  .about-meta {
+    grid-column: 1 / span 4;
+  }
 
-html[data-about] .pill:hover {
-  filter: brightness(0.82);
-}
+  .about-facts {
+    grid-column: 7 / -1;
+    white-space: nowrap;
+  }
 
-html[data-about] .site-logo {
-  filter: invert(var(--logo-ink, 0));
-}
+  .about-cols {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--gap);
+    align-items: start;
+  }
 
-html[data-about] .ali {
-  filter: invert(var(--ali-ink, 0));
+  .about-col:nth-of-type(1) {
+    grid-column: 1 / span 3;
+  }
+
+  .about-col:nth-of-type(2) {
+    grid-column: 4 / span 2;
+  }
+
+  .about-col:nth-of-type(3) {
+    grid-column: 6 / span 2;
+  }
+
+  .about-statement {
+    grid-column: 8 / span 4;
+  }
+
+  .about-col-end {
+    grid-column: 12 / span 1;
+    text-align: right;
+  }
 }
 
 html[data-about] .sitefooter {
-  color: #6a6a6a;
+  color: var(--about-dim);
 }
 
 /* QuietLink drops the href, and with it the browser's pointer cursor. */

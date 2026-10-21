@@ -1,189 +1,236 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 
+/* The loud list. Things about him, not things he has done. */
+const facts = [
+  "Born in Canada",
+  "Grew up speaking French",
+  "Four months in Rome",
+  "Now obsessed with ceilings",
+  "Designed his own house",
+  "Started a fashion brand",
+  "Travels for the buildings",
+  "Tennis, books, beach",
+];
+
 const experience = [
-  { year: "2025—", role: "Software Developer", org: "Omvra Studios" },
-  { year: "2024—", role: "Architecture + Software Intern", org: "Little Diversified" },
-  { year: "2023—24", role: "Events Director", org: "AIAS Charlotte" },
-  { year: "2022—23", role: "Creative Director & Developer", org: "Sublime MediSpa" },
+  { org: "Little Diversified", role: "Technology + Architecture Intern", when: "2024—" },
+  { org: "UNC Charlotte UR2PhD", role: "AI / ML Researcher", when: "2026—" },
+  { org: "Studio 49", role: "President & Co-Founder", when: "2026—" },
+  { org: "Omvra Studios", role: "Software Developer", when: "2025—" },
+  { org: "AIAS Charlotte", role: "Events Director", when: "2023—24" },
+  { org: "Sublime MediSpa", role: "Creative Director", when: "2022—23" },
 ];
 
-const tools = [
-  "TypeScript / React",
-  "Python / FastAPI",
+const shipped: { label: string; note: string; href?: string }[] = [
+  { label: "Permit research platform", note: "500+ staff" },
+  { label: "Revit plugins", note: "30+ architects" },
+  { label: "Differential growth engine", note: "research", href: "/work/differential-growth" },
+  { label: "Growth-pattern CVAE", note: "research", href: "/work/differential-growth-cvae" },
+  { label: "Otter", note: "hackathon", href: "/work/otter" },
+  { label: "Studio 49", note: "studio", href: "/work/studio-49" },
+];
+
+const recognition = [
+  "Dean's List 2022—2026",
+  "Computing & Informatics Honors",
+  "Early-entry M.S. in AI",
+];
+
+const capabilities = [
+  "Full-stack web apps",
+  "Computational design tools",
+  "Generative geometry",
+  "Machine learning for form",
+  "Revit + Rhino plugins",
+  "Interface design",
+  "Brand + web design",
+];
+
+const stack = [
+  "TypeScript",
+  "React / Next.js",
+  "Python",
+  "FastAPI",
   "PostgreSQL",
-  "Rhino / Grasshopper",
+  "AWS + Azure",
+  "TensorFlow",
+  "Rhino",
+  "Grasshopper",
+  "pyRevit",
   "Blender",
-  "Power Platform",
+  "Figma",
 ];
 
-/* Slow on purpose: the black is meant to be watched climbing the screen, not
-   to flick up. Eased so it arrives without a bump — most of the distance is
-   covered early and the last stretch settles. */
-const RISE = 1.9;
-/* Not an expo curve: that covers eighty per cent of the screen in the first
-   third of the time and then creeps, which reads as a flick followed by a
-   stall. This keeps an even pace most of the way and only softens at the
-   top. */
-const EASE = [0.33, 0.12, 0.2, 1] as const;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-/*
- * When each piece of the chrome changes over, as a fraction of the rise.
- *
- * The sheet comes up from the bottom, so it reaches things in the order they
- * sit on the screen: the mascot in the bottom corner almost at once, the nav
- * at the top only at the end. Giving each its own window is what makes the
- * black look like it is passing OVER them rather than the page cutting colour
- * underneath it.
- */
-const ALI_AT: [number, number] = [0.04, 0.18];
-const NAV_AT: [number, number] = [0.58, 0.94];
-const LOGO_AT: [number, number] = [0.78, 0.9];
-
-const setVar = (name: string, value: string) =>
-  document.documentElement.style.setProperty(name, value);
-
-const CHROME_VARS = ["--nav-paper", "--pill-paper", "--pill-ink", "--logo-ink", "--ali-ink"];
-
-const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
-
-/** Where a value sits inside its own window of the climb. */
-const at = (p: number, [a, b]: [number, number]) => clamp01((p - a) / (b - a));
-
-/** Straight mix between two #rrggbb, as an rgb() string. */
-const mix = (from: string, to: string, t: number) => {
-  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const [r1, g1, b1] = hex(from);
-  const [r2, g2, b2] = hex(to);
-  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
-  return `rgb(${c(r1, r2)}, ${c(g1, g2)}, ${c(b1, b2)})`;
-};
-
-/** Paint the chrome for a given point in the climb. */
-function paintChrome(p: number) {
-  const nav = at(p, NAV_AT);
-  setVar("--nav-paper", mix("#ffffff", "#060606", nav));
-  setVar("--pill-paper", mix("#0a0a0a", "#f2f2f2", nav));
-  setVar("--pill-ink", mix("#ffffff", "#0a0a0a", nav));
-  setVar("--logo-ink", String(at(p, LOGO_AT)));
-  setVar("--ali-ink", String(at(p, ALI_AT)));
+/** Charlotte time, ticking. Empty until mounted so the server and client agree. */
+function useCharlotteTime() {
+  const [time, setTime] = useState("");
+  useEffect(() => {
+    const fmt = new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/New_York",
+    });
+    const tick = () => setTime(fmt.format(new Date()));
+    tick();
+    const id = setInterval(tick, 15_000);
+    return () => clearInterval(id);
+  }, []);
+  return time;
 }
 
 export function AboutRoll() {
   const still = useReducedMotion();
-  const sheet = useRef<HTMLDivElement>(null);
+  const time = useCharlotteTime();
 
-  /*
-   * The chrome follows where the black actually IS, measured every frame off
-   * the sheet itself, rather than off a value the animation is supposed to be
-   * driving. The nav, the wordmark and the mascot are rendered by the layout,
-   * outside this page, so nothing here can style them directly — their
-   * colours go out as custom properties and the stylesheet spends them.
-   *
-   * Reading the element was not the first approach. Driving a motion value
-   * imperatively and deriving the colours from it works in development and
-   * silently does nothing in the production bundle: the sheet sat off the
-   * bottom of the screen and the only black on the page was the body behind
-   * it. Measuring cannot drift from what is on screen, because it is what is
-   * on screen.
-   */
+  /* The page paints its own grey under the nav and puts the corner Ali away:
+     he is already sitting in the middle of this one. */
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.about = "";
-    root.dataset.locked = "";
-    paintChrome(still ? 1 : 0);
-    if (still) return () => {
-      delete root.dataset.about;
-      delete root.dataset.locked;
-      for (const v of CHROME_VARS) root.style.removeProperty(v);
-    };
-
-    let frame = 0;
-    const follow = () => {
-      const el = sheet.current;
-      if (el) {
-        const top = el.getBoundingClientRect().top;
-        paintChrome(clamp01(1 - top / Math.max(1, window.innerHeight)));
-      }
-      frame = requestAnimationFrame(follow);
-    };
-    frame = requestAnimationFrame(follow);
-
     return () => {
-      cancelAnimationFrame(frame);
       delete root.dataset.about;
-      delete root.dataset.locked;
-      for (const v of CHROME_VARS) root.style.removeProperty(v);
     };
-  }, [still]);
+  }, []);
+
+  const rise = (delay: number) =>
+    still
+      ? {}
+      : {
+          initial: { y: "105%" },
+          animate: { y: 0 },
+          transition: { duration: 1.1, delay, ease: EASE },
+        };
+
+  const fade = (delay: number) =>
+    still
+      ? {}
+      : {
+          initial: { opacity: 0, y: 12 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.7, delay, ease: EASE },
+        };
 
   return (
     <main className="about">
-      <motion.div
-        ref={sheet}
-        className="about-sheet"
-        /* Declarative, not an imperative animate() on a motion value: the
-           latter does not run once the bundle is built. */
-        initial={still ? false : { y: "100%" }}
-        animate={{ y: 0 }}
-        transition={{ duration: still ? 0 : RISE, ease: EASE }}
-      >
-        <div className="about-inner">
-          <div className="about-col">
-            <p className="about-lead">
-              I am reading Computer Science and Architecture at UNC Charlotte,
-              finishing in 2027. Most of what I build sits where those two meet
-              — generative geometry, tools that take a drawing problem and give
-              it a loop to run in, and the interfaces people actually use
-              afterwards. Looking for software and computational design work.
-            </p>
+      <section className="about-top">
+        <motion.div className="about-meta" {...fade(0.1)}>
+          <p>
+            <span className="about-dim">Based in</span>
+            <br />
+            Charlotte, NC{time && <span className="about-dim">, {time}</span>}
+          </p>
+          <p>
+            <span className="about-dim">Open to</span>
+            <br />
+            Software + computational design, 2027
+          </p>
+          <p className="about-intro">
+            Ali Chaaraoui. Computer Science, AI and Architecture at UNC
+            Charlotte. I build software for design problems, and the interfaces
+            people use to work with it.
+          </p>
+        </motion.div>
 
-            <section className="about-block">
-              <h2>Experience</h2>
-              {experience.map((e) => (
-                <div key={e.year} className="about-row">
-                  <span className="about-when">{e.year}</span>
-                  <span className="about-what">{e.role}</span>
-                  <span className="about-where">{e.org}</span>
-                </div>
-              ))}
-            </section>
-          </div>
+        <ul className="about-facts">
+          {facts.map((f, i) => (
+            <li key={f}>
+              <motion.span {...rise(0.15 + i * 0.06)}>{f}</motion.span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-          <div className="about-col about-col-side">
-            <section className="about-block">
-              <h2>Tools</h2>
-              <ul className="about-list">
-                {tools.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-            </section>
+      <section className="about-year" aria-label="Class of 2027">
+        <span className="about-num">
+          <motion.span {...rise(0.25)}>20</motion.span>
+        </span>
+        <motion.img
+          className="about-ali"
+          src="/ali/idle.webp"
+          alt="Drawing of Ali at a laptop"
+          {...fade(0.5)}
+        />
+        <span className="about-num about-num-right">
+          <motion.span {...rise(0.35)}>27</motion.span>
+        </span>
+        <motion.span className="about-and" {...fade(0.7)}>
+          Class of
+        </motion.span>
+      </section>
 
-            <section className="about-block">
-              <h2>Education</h2>
-              <p className="about-plain">
-                UNC Charlotte
-                <br />
-                B.S. Computer Science
-                <br />
-                B.A. Architecture
-                <br />
-                2022—2027
-              </p>
-            </section>
-
-            <section className="about-block">
-              <h2>Résumé</h2>
-              <p className="about-plain">
-                <a href="/resume">Read it →</a>
-              </p>
-            </section>
-          </div>
+      <motion.section className="about-cols" {...fade(0.6)}>
+        <div className="about-col">
+          <h2>Experience</h2>
+          <ul>
+            {experience.map((e) => (
+              <li key={e.org} className="about-exp">
+                <span>{e.org}</span>
+                <span className="about-dim">
+                  {e.role}{" "}
+                  <span className="about-when">({e.when})</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-      </motion.div>
+
+        <div className="about-col">
+          <h2>Shipped</h2>
+          <ul>
+            {shipped.map((s) => (
+              <li key={s.label}>
+                {s.href ? (
+                  <Link href={s.href} className="about-link">
+                    {s.label}
+                  </Link>
+                ) : (
+                  s.label
+                )}{" "}
+                <span className="about-dim">({s.note})</span>
+              </li>
+            ))}
+          </ul>
+          <h2 className="about-h2-gap">Recognition</h2>
+          <ul>
+            {recognition.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="about-col">
+          <h2>Capabilities</h2>
+          <ul>
+            {capabilities.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+          <p className="about-h2-gap">
+            <Link href="/resume" className="about-link">
+              Résumé
+            </Link>
+          </p>
+        </div>
+
+        <p className="about-statement">
+          Software for the way architects and designers actually work.
+        </p>
+
+        <div className="about-col-end">
+          <h2>Stack</h2>
+          <ul>
+            {stack.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      </motion.section>
     </main>
   );
 }
