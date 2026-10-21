@@ -4,16 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 
-/* The loud list. Things about him, not things he has done. */
+/* The big lines. His own words, one per line. */
 const facts = [
-  "Born in Canada",
-  "Grew up speaking French",
-  "Four months in Rome",
-  "Now obsessed with ceilings",
-  "Designed his own house",
-  "Started a fashion brand",
-  "Travels for the buildings",
-  "Tennis, books, beach",
+  "I love design.",
+  "I love technology.",
+  "I am obsessed with",
+  "the intersections",
+  "between the two.",
 ];
 
 const experience = [
@@ -35,6 +32,7 @@ const shipped: { label: string; note: string; href?: string }[] = [
 ];
 
 const recognition = [
+  "AIA Charlotte Advanced Design Award",
   "Dean's List 2022—2026",
   "Computing & Informatics Honors",
   "Early-entry M.S. in AI",
@@ -48,21 +46,6 @@ const capabilities = [
   "Revit + Rhino plugins",
   "Interface design",
   "Brand + web design",
-];
-
-const stack = [
-  "TypeScript",
-  "React / Next.js",
-  "Python",
-  "FastAPI",
-  "PostgreSQL",
-  "AWS + Azure",
-  "TensorFlow",
-  "Rhino",
-  "Grasshopper",
-  "pyRevit",
-  "Blender",
-  "Figma",
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -88,8 +71,8 @@ export function AboutRoll() {
   const still = useReducedMotion();
   const time = useCharlotteTime();
 
-  /* The page paints its own grey under the nav and puts the corner Ali away:
-     he is already sitting in the middle of this one. */
+  /* The corner Ali is put away: he is already sitting in the middle of this
+     page. */
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.about = "";
@@ -125,15 +108,15 @@ export function AboutRoll() {
             <br />
             Charlotte, NC{time && <span className="about-dim">, {time}</span>}
           </p>
-          <p>
-            <span className="about-dim">Open to</span>
-            <br />
-            Software + computational design, 2027
-          </p>
           <p className="about-intro">
-            Ali Chaaraoui. Computer Science, AI and Architecture at UNC
-            Charlotte. I build software for design problems, and the interfaces
-            people use to work with it.
+            Hey, I&apos;m Ali. I study computer science, AI and architecture at
+            UNC Charlotte, and I&apos;m happiest when I get to bring design and
+            technology together. I care a lot about the little details and how
+            things actually feel to the people using them. Right now I&apos;m
+            researching how AI can learn growth patterns, building tools for
+            architects at Little and running Studio 49. I graduate in 2027 and
+            I&apos;m looking for a team to grow, learn and build great things
+            with.
           </p>
         </motion.div>
 
@@ -219,17 +202,12 @@ export function AboutRoll() {
         </div>
 
         <p className="about-statement">
-          Software for the way architects and designers actually work.
+          Creative Technologist
+          <br />
+          Architectural Designer
+          <br />
+          Software &amp; AI Engineer
         </p>
-
-        <div className="about-col-end">
-          <h2>Stack</h2>
-          <ul>
-            {stack.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </div>
       </motion.section>
     </main>
   );
