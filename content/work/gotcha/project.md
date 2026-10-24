@@ -103,9 +103,9 @@ with word timings; the video feeds the panel and the eye tracking.
 The sidebar is built to be read in a glance between sentences: one status
 (Watch, Warning or Test now), one question to ask, one line on what GotCha
 thinks, and an "I disagree" button. When an answer sounds scripted, the next
-question is written from their GitHub. Here it asks why they kept the todo
-list in localStorage in their own todo-app repo, which no model can answer for
-them.
+question is written from their GitHub. Here it asks what broke when their own
+todo-app synced localStorage after a page refresh, which no model can answer
+for them.
 
 The main stage shows what the candidate is saying, what each AI model would
 have said with the closest one named, and a timeline of every question with
