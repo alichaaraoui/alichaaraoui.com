@@ -6,7 +6,7 @@ blurb: a live interview co-pilot for recruiters
 order: -1
 href: https://gotcha-steel.vercel.app
 hero: 01-demo.mp4
-cover: cover.webp
+cover: cover.gif
 role: Team lead; live interview, identity check, report, library
 stack: Next.js, TypeScript, Groq, MediaPipe, Vercel
 status: Winner, Method / GlobalLogic Hackathon, 2026
