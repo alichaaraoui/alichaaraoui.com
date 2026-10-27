@@ -63,8 +63,28 @@ export interface GeneratedProject {
   cover: Img | null;
   /** Width / height of the cover. */
   coverRatio: number;
+  /** The app in use, for the software card grid. Frontmatter `card`. */
+  card: Img | null;
   gallery: Img[];
   sections: Section[];
 }
 
 export type Project = GeneratedProject;
+
+/** One entry in content/archive/<kind>/: a picture, a clip, or a written idea. */
+export interface GeneratedArchiveItem {
+  /** `<kind>/<filename without extension>`. */
+  id: string;
+  /** The folder it sits in — sketches, ideas, ... — and so a filter. */
+  kind: string;
+  title: string;
+  year: string;
+  tags: string[];
+  /** Rendered HTML from the sidecar `.md`. */
+  note: string;
+  href?: string;
+  img: Img | null;
+  /** Width / height, or 0 for a written entry. */
+  ratio: number;
+  order: number;
+}

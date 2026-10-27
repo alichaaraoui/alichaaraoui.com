@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { CardGrid } from "@/components/CardGrid";
 import { Footer } from "@/components/Footer";
 import {
   Empty,
@@ -28,6 +29,10 @@ export default function Home() {
       <main className="min-h-0 flex-1">
         {visible.length === 0 ? (
           <Empty category={category} />
+        ) : category === "software" ? (
+          /* Software reads as a plain grid of cards whatever the view says,
+             on a phone too — the views stay an architecture thing. */
+          <CardGrid projects={visible} />
         ) : (
           <>
             {(phone || view === "grid") && <GridView projects={visible} />}

@@ -4,7 +4,8 @@
  *
  * Reads content/work/<slug>/ — a project.md plus its images — and compiles it
  * into src/data/projects.generated.ts, resizing every image into public/work/
- * on the way. Adding a project means making a folder; nothing else.
+ * on the way. Adding a project means making a folder; nothing else. The archive
+ * in content/archive/ goes through the same pipeline into archive.generated.ts.
  *
  * It runs before `dev` and `build`, so the generated file is disposable and is
  * not committed.
@@ -26,6 +27,17 @@ const ROOT = process.cwd();
 const CONTENT_DIR = path.join(ROOT, "content", "work");
 const IMAGE_OUT = path.join(ROOT, "public", "work");
 const DATA_OUT = path.join(ROOT, "src", "data", "projects.generated.ts");
+
+/* Where a piece of media is read from and written to. Projects and the archive
+   share one pipeline; only the folders and the public url differ. Not
+   `public/archive`: that would shadow the /archive route. */
+const WORK = { content: CONTENT_DIR, dir: IMAGE_OUT, url: "/work" };
+const ARCHIVE = {
+  content: path.join(ROOT, "content", "archive"),
+  dir: path.join(ROOT, "public", "archive-media"),
+  url: "/archive-media",
+};
+const ARCHIVE_DATA_OUT = path.join(ROOT, "src", "data", "archive.generated.ts");
 
 /* The ladder the browser picks from. Sources smaller than a rung are left at
    their own size rather than upscaled, and the real width is recorded, so the
@@ -118,8 +130,8 @@ function toSections(body) {
  * are named for the width they actually are, not the rung that was asked for,
  * so the srcset never promises pixels that are not in the file.
  */
-async function buildStill(src, base, slug, produced, sourceMtime) {
-  const outDir = path.join(IMAGE_OUT, slug);
+async function buildStill(src, base, slug, produced, sourceMtime, place = WORK) {
+  const outDir = path.join(place.dir, slug);
   await fs.mkdir(outDir, { recursive: true });
 
   const probe = await sharp(src, { failOn: "none", animated: true }).metadata();
@@ -154,7 +166,7 @@ async function buildStill(src, base, slug, produced, sourceMtime) {
         .webp({ quality: 82 })
         .toFile(out);
     }
-    rungs.push({ url: `/work/${slug}/${name}`, width });
+    rungs.push({ url: `${place.url}/${slug}/${name}`, width });
     produced.add(name);
   }
 
@@ -177,7 +189,7 @@ async function buildStill(src, base, slug, produced, sourceMtime) {
   if (!animated) return still;
 
   // The stills above are now this clip's poster.
-  const { full, small } = await encodeVideo(src, base, slug, produced, sourceMtime, srcW);
+  const { full, small } = await encodeVideo(src, base, slug, produced, sourceMtime, srcW, place);
   return {
     ...still,
     video: {
@@ -196,8 +208,8 @@ async function buildStill(src, base, slug, produced, sourceMtime) {
  * a GIF in an <img> cannot be told where to start, so anything that moves is
  * turned into video and played under our control.
  */
-async function encodeVideo(src, base, slug, produced, sourceMtime, srcWidth) {
-  const outDir = path.join(IMAGE_OUT, slug);
+async function encodeVideo(src, base, slug, produced, sourceMtime, srcWidth, place = WORK) {
+  const outDir = path.join(place.dir, slug);
   await fs.mkdir(outDir, { recursive: true });
 
   const one = async (targetWidth, crf, suffix) => {
@@ -222,7 +234,7 @@ async function encodeVideo(src, base, slug, produced, sourceMtime, srcWidth) {
         out,
       ]);
     }
-    return { url: `/work/${slug}/${name}`, width: w };
+    return { url: `${place.url}/${slug}/${name}`, width: w };
   };
 
   return {
@@ -266,10 +278,10 @@ async function probeVideo(src) {
  * Audio is dropped: these play muted and looping — autoplay requires it — so
  * the soundtrack would be bytes nobody ever hears.
  */
-async function processVideo(slug, file, produced) {
-  const src = path.join(CONTENT_DIR, slug, file);
+async function processVideo(slug, file, produced, place = WORK) {
+  const src = path.join(place.content, slug, file);
   const base = path.parse(file).name;
-  const outDir = path.join(IMAGE_OUT, slug);
+  const outDir = path.join(place.dir, slug);
   await fs.mkdir(outDir, { recursive: true });
 
   let info;
@@ -286,7 +298,7 @@ async function processVideo(slug, file, produced) {
 
   const sourceMtime = (await fs.stat(src)).mtimeMs;
   const width = Math.min(VIDEO_WIDTH, info.width);
-  const { full, small } = await encodeVideo(src, base, slug, produced, sourceMtime, info.width);
+  const { full, small } = await encodeVideo(src, base, slug, produced, sourceMtime, info.width, place);
 
   // Poster: a frame from a little way in, so it is not a black first frame.
   const at = info.duration > 2 ? Math.min(1, info.duration / 4) : 0;
@@ -302,7 +314,7 @@ async function processVideo(slug, file, produced) {
     frame,
   ]);
 
-  const still = await buildStill(frame, base, slug, produced, sourceMtime);
+  const still = await buildStill(frame, base, slug, produced, sourceMtime, place);
   await fs.rm(path.dirname(frame), { recursive: true, force: true });
   if (!still) return null;
 
@@ -320,12 +332,12 @@ async function processVideo(slug, file, produced) {
 }
 
 /** Route a file to the still or the video path. */
-async function processMedia(slug, file, produced) {
+async function processMedia(slug, file, produced, place = WORK) {
   const ext = path.extname(file).toLowerCase();
-  if (VIDEO_EXT.has(ext)) return processVideo(slug, file, produced);
-  const src = path.join(CONTENT_DIR, slug, file);
+  if (VIDEO_EXT.has(ext)) return processVideo(slug, file, produced, place);
+  const src = path.join(place.content, slug, file);
   const mtime = (await fs.stat(src)).mtimeMs;
-  return buildStill(src, path.parse(file).name, slug, produced, mtime);
+  return buildStill(src, path.parse(file).name, slug, produced, mtime, place);
 }
 
 /** Delete anything in an output folder that this run did not just produce. */
@@ -406,8 +418,21 @@ async function readProject(slug) {
     else console.warn(`  ! ${slug}: cover "${data.cover}" is not in the folder`);
   }
 
+  // The card on the software grid: the app in use. Often the hero or a figure
+  // too; otherwise, like the cover, it stays out of the gallery.
+  let card = null;
+  if (data.card) {
+    if (files.includes(data.card)) card = await processMedia(slug, data.card, produced);
+    else console.warn(`  ! ${slug}: card "${data.card}" is not in the folder`);
+  }
+
   const images = [];
-  const listed = files.filter((f) => !inline.has(f) && f !== data.cover);
+  const listed = files.filter(
+    (f) =>
+      !inline.has(f) &&
+      f !== data.cover &&
+      (f !== data.card || f === data.hero)
+  );
   for (const file of listed) {
     const img = await processMedia(slug, file, produced);
     if (img) images.push(img);
@@ -471,9 +496,105 @@ async function readProject(slug) {
     coverRatio: Number(
       (cover ? cover.width / cover.height : ratio).toFixed(4)
     ),
+    card,
     gallery,
     sections: toSections(body),
   };
+}
+
+const list = (v) =>
+  v === undefined
+    ? []
+    : (Array.isArray(v) ? v : String(v).split(","))
+        .map((t) => String(t).trim().toLowerCase())
+        .filter(Boolean);
+
+/**
+ * The archive: content/archive/<kind>/, where the folder name is the kind
+ * (sketches, ideas, ...) and so becomes a filter. Any picture or clip is an
+ * entry on its own. A `.md` beside it with the same name adds a title, year,
+ * tags and a note; a `.md` with no picture is a written entry — an idea.
+ */
+async function buildArchive() {
+  const root = ARCHIVE.content;
+  const items = [];
+  const kinds = (await exists(root))
+    ? (await fs.readdir(root, { withFileTypes: true }))
+        .filter((e) => e.isDirectory() && !/^[._]/.test(e.name))
+        .map((e) => e.name)
+        .sort()
+    : [];
+
+  for (const kind of kinds) {
+    const dir = path.join(root, kind);
+    const files = (await fs.readdir(dir)).filter((f) => !/^[._]/.test(f)).sort();
+    const media = files.filter((f) => {
+      const ext = path.extname(f).toLowerCase();
+      return SOURCE_EXT.has(ext) || VIDEO_EXT.has(ext);
+    });
+    const notes = new Set(files.filter((f) => path.extname(f).toLowerCase() === ".md"));
+    const bases = [
+      ...new Set([...media, ...notes].map((f) => path.parse(f).name)),
+    ].sort();
+
+    const produced = new Set();
+    for (const base of bases) {
+      const file = media.find((f) => path.parse(f).name === base);
+      const mdName = `${base}.md`;
+      const { data, content } = notes.has(mdName)
+        ? matter(await fs.readFile(path.join(dir, mdName), "utf8"))
+        : { data: {}, content: "" };
+
+      const img = file ? await processMedia(kind, file, produced, ARCHIVE) : null;
+      const note = content.trim();
+      if (!img && !note && !data.title) continue;
+
+      items.push({
+        id: `${kind}/${base}`,
+        kind,
+        // Untitled pictures read their filename, minus any leading number.
+        title: data.title
+          ? String(data.title)
+          : img
+            ? base.replace(/^\d+[-_ ]*/, "").replace(/[-_]+/g, " ")
+            : "",
+        year: data.year ? String(data.year) : "",
+        tags: list(data.tags),
+        note: note ? marked.parse(note).trim() : "",
+        href: data.link ? String(data.link) : undefined,
+        img,
+        ratio: img ? Number((img.width / img.height).toFixed(4)) : 0,
+        order: data.order === undefined ? 999 : Number(data.order),
+      });
+    }
+    await prune(path.join(ARCHIVE.dir, kind), produced);
+    console.log(`  · archive/${kind} — ${items.filter((i) => i.kind === kind).length} item(s)`);
+  }
+
+  if (await exists(ARCHIVE.dir)) {
+    for (const entry of await fs.readdir(ARCHIVE.dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || kinds.includes(entry.name)) continue;
+      await fs.rm(path.join(ARCHIVE.dir, entry.name), { recursive: true, force: true });
+      console.log(`  - removed stale folder archive-media/${entry.name}`);
+    }
+  }
+
+  // Newest first; `order` breaks ties within a year.
+  items.sort(
+    (a, b) =>
+      (Number(b.year) || 0) - (Number(a.year) || 0) ||
+      a.order - b.order ||
+      a.id.localeCompare(b.id)
+  );
+
+  const body = `// GENERATED by scripts/build-content.mjs — do not edit, your changes will be lost.
+// Source of truth is content/archive/<kind>/.
+import type { GeneratedArchiveItem } from "./types";
+
+export const generatedArchive: GeneratedArchiveItem[] = ${JSON.stringify(items, null, 2)};
+`;
+  await fs.writeFile(ARCHIVE_DATA_OUT, body);
+  console.log(`wrote ${path.relative(ROOT, ARCHIVE_DATA_OUT)}`);
 }
 
 async function main() {
@@ -489,6 +610,8 @@ async function main() {
   if (pipelineStale && seen) {
     console.log("pipeline changed — re-encoding everything");
   }
+
+  await buildArchive();
 
   const slugs = (await fs.readdir(CONTENT_DIR, { withFileTypes: true }))
     // `_` prefixed folders are templates/scratch, not projects.

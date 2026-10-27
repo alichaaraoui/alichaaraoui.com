@@ -24,6 +24,8 @@
      discipline toggle sits under it in the open. */
   --bar-h: var(--nav-h);
   --footer-h: 2.25rem;
+  /* The phone discipline strip's own band, above the footer. */
+  --strip-band: 4rem;
   --grid-h: calc(100dvh - var(--nav-h) - var(--footer-h));
   /* Must match ROWS in data/projects.ts. */
   --rows: 4;
@@ -157,12 +159,14 @@ html {
   /*
    * Down where a thumb rests, not tucked under the bar at the top — it is the
    * only control that changes what is on the screen, so it sits within reach.
-   * Floating, so it costs the reel no height.
+   * It gets a band of its own just above the footer: floated over the reel it
+   * landed on the receding thumbnails and covered them.
    */
   .nav-strip {
     position: fixed;
     left: 50%;
-    bottom: 9rem;
+    bottom: var(--footer-h);
+    height: var(--strip-band);
     transform: translateX(-50%);
     z-index: 26;
     display: flex;
@@ -362,6 +366,11 @@ html {
   .nav-contact {
     grid-column: 11 / span 2;
     grid-row: 1;
+  }
+  /* Under about, on the filter's line. */
+  .nav-archive {
+    grid-column: 9 / span 2;
+    grid-row: 2;
   }
   /* The filter sits under the view pills — same column, second line. */
   .nav-filter {
@@ -948,6 +957,12 @@ html {
   grid-template-rows: 0fr;
   opacity: 0;
   pointer-events: none;
+}
+
+/* The discipline strip's band. The reel gives it up rather than running
+   underneath it, and its depth curve re-fits to the shorter box. */
+.phone-grid[data-reel="open"] .reel {
+  margin-bottom: var(--strip-band);
 }
 
 /*
@@ -2033,6 +2048,20 @@ html[data-about] .ali {
   text-transform: uppercase;
 }
 
+.about-facts-dim {
+  color: var(--about-dim);
+}
+
+.about-hey {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--about-ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
 /* Each line rises out of its own slot, so it needs something to be hidden by. */
 .about-facts li,
 .about-num {
@@ -2276,4 +2305,437 @@ html[data-about] .sitefooter {
 /* QuietLink drops the href, and with it the browser's pointer cursor. */
 a[role="link"] {
   cursor: pointer;
+}
+
+/* ------------------------------------------------------------ archive ---- */
+
+/*
+ * The library. Pictures keep their own shapes and stack in columns like pinned
+ * paper; written ideas are plain cards in the same flow.
+ */
+.archive {
+  min-height: calc(100dvh - var(--nav-h));
+  padding: 0 var(--gutter) 4rem;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.archive-dim,
+.archive-empty {
+  color: #a3a3a3;
+}
+
+/* The boards: a single row of words, the chosen one underlined, sticky under
+   the nav and sideways-scrolling once there are more than fit. */
+.archive-boards {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 20;
+  margin: 0 calc(-1 * var(--gutter)) 1rem;
+  background: var(--color-background);
+}
+
+.archive-boards-row {
+  display: flex;
+  gap: 1.75rem;
+  overflow-x: auto;
+  padding: 0.9rem var(--gutter) 0.7rem;
+  scrollbar-width: none;
+}
+
+.archive-boards-row::-webkit-scrollbar {
+  display: none;
+}
+
+.archive-board-tab {
+  position: relative;
+  flex: none;
+  padding-bottom: 0.3rem;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-transform: capitalize;
+  transition: opacity 150ms;
+}
+
+.archive-board-tab:hover {
+  opacity: 0.6;
+}
+
+.archive-board-tab[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--color-foreground);
+}
+
+.archive-boards-more {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3.5rem;
+  padding-right: var(--gutter);
+  text-align: right;
+  font-size: 20px;
+  background: linear-gradient(to right, transparent, var(--color-background) 45%);
+}
+
+/* The feed: columns dealt in script, so the newest pins run across the top. */
+.archive-board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.archive-col {
+  display: grid;
+  gap: 1.1rem;
+}
+
+@media (max-width: 767px) {
+  .archive-board {
+    gap: 0.5rem;
+  }
+  .archive-col {
+    gap: 0.8rem;
+  }
+  .archive-boards-row {
+    gap: 1.25rem;
+  }
+  .archive-board-tab {
+    font-size: 14px;
+  }
+}
+
+.archive-card {
+  animation: archive-deal 480ms var(--ease) both;
+  animation-delay: calc(var(--i) * 18ms);
+}
+
+@keyframes archive-deal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-card {
+    animation: none;
+  }
+}
+
+.archive-face {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: zoom-in;
+}
+
+a.archive-face {
+  cursor: pointer;
+}
+
+/* Darken a touch under the cursor, the way a pin does. */
+.archive-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0);
+  transition: background 200ms;
+  pointer-events: none;
+}
+
+.archive-face:hover::after {
+  background: rgb(0 0 0 / 0.12);
+}
+
+.archive-art {
+  position: relative;
+  display: block;
+  aspect-ratio: var(--ar, 1);
+  overflow: hidden;
+  background: #f2f2f2;
+}
+
+.archive-text {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.1rem 1rem 1.25rem;
+  background: #f2f2f2;
+}
+
+.archive-text-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* A taste of the idea on the board; the viewer has the rest. */
+.archive-text-note {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.archive-text-note,
+.archive-viewer-note {
+  display: grid;
+  gap: 0.5em;
+}
+
+.archive-text-note a,
+.archive-viewer-note a,
+.archive-viewer-text a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.archive-cap {
+  overflow: hidden;
+  padding: 0.45rem 0.15rem 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The viewer: a black slab over everything, nav included. */
+.archive-viewer {
+  position: fixed;
+  inset: 0;
+  /* Over the nav and the mascot both. */
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  padding: 1rem var(--gutter) 1.25rem;
+  background: #0a0a0a;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: archive-fade 240ms ease both;
+}
+
+@keyframes archive-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.archive-viewer-bar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.archive-viewer-bar button:hover {
+  opacity: 0.6;
+}
+
+.archive-viewer-body {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.archive-viewer-art {
+  position: relative;
+  display: block;
+  aspect-ratio: var(--ar);
+  max-width: 100%;
+  max-height: 100%;
+  height: 100%;
+}
+
+.archive-viewer-art img,
+.archive-viewer-art video {
+  object-fit: contain;
+}
+
+.archive-viewer-text {
+  max-width: 40ch;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.archive-viewer-cap {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.archive-viewer-note {
+  max-width: 60ch;
+  margin-top: 0.4rem;
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #d4d4d4;
+}
+
+/* ------------------------------------------------------ software cards ---- */
+
+/*
+ * The software side: two big cards to a row, one on a phone. It scrolls inside
+ * the fixed frame like the index does, so .pane supplies the scroll and the
+ * cards only add spacing. Each project sits on a soft panel as an app window —
+ * a thin title bar over a 16:10 screen, the same size on every card. The panel is a size
+ * container so the window can fit by both axes. Square corners throughout.
+ */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5rem 1.5rem;
+  padding-block: 1.5rem 4rem;
+
+  --card-bar-h: 1.25rem;
+  /* One screen shape for every window; recordings fill it by cover. */
+  --ar: 1.6;
+}
+
+.card-link {
+  display: block;
+  cursor: pointer;
+  outline: none;
+}
+
+.card-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  background: #f4f4f3;
+  overflow: hidden;
+  container-type: size;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.card-link:hover .card-panel,
+.card-link:focus-visible .card-panel {
+  background: #ececea;
+}
+
+.card-link:focus-visible .card-panel {
+  outline: 1px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+
+/* The window: as wide as fits both 86% of the panel's width and, bar
+   included, 82% of its height. */
+.card-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(86cqw, (82cqh - var(--card-bar-h)) * var(--ar));
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 14px 34px -16px rgb(0 0 0 / 0.3);
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.card-link:hover .card-art {
+  transform: scale(1.025);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.08),
+    0 22px 44px -18px rgb(0 0 0 / 0.36);
+}
+
+.card-bar {
+  height: var(--card-bar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: #a3a3a3;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Three square lights, drawn as one box and two shadows. */
+.card-dots {
+  width: 4px;
+  height: 4px;
+  flex-shrink: 0;
+  margin-right: 10px;
+  background: #d4d4d4;
+  box-shadow:
+    7px 0 #d4d4d4,
+    14px 0 #d4d4d4;
+}
+
+.card-screen {
+  position: relative;
+  display: block;
+  aspect-ratio: var(--ar);
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.card-year {
+  font-size: 0.875rem;
+  color: #a3a3a3;
+}
+
+.card-blurb {
+  display: block;
+  padding-top: 0.35rem;
+  font-size: 0.95rem;
+  color: #737373;
+}
+
+@media (max-width: 767px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    padding-block: 1rem 3rem;
+  }
+
+  .card-panel {
+    aspect-ratio: 4 / 3;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .card-blurb {
+    font-size: 0.875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-panel,
+  .card-art {
+    transition-duration: 1ms;
+  }
 }

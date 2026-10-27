@@ -47,3 +47,5 @@ next-env.d.ts
 /src/data/projects.generated.ts
 /public/work/*
 !/public/work/.gitkeep
+/src/data/archive.generated.ts
+/public/archive-media/

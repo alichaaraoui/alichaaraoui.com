@@ -7,6 +7,7 @@ order: -1
 href: https://gotcha-steel.vercel.app
 hero: 01-demo.mp4
 cover: cover.gif
+card: 16-live-call.mp4
 role: Team lead; live interview, identity check, report, library
 stack: Next.js, TypeScript, Groq, MediaPipe, Vercel
 status: Winner, Method / GlobalLogic Hackathon, 2026

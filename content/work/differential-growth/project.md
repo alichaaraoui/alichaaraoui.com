@@ -6,6 +6,7 @@ blurb: a curve that grows until it has to fold
 order: 1
 
 hero: 01-growth.mp4
+card: 02-interface.mp4
 href: https://alichaaraoui.github.io/DifferentialGrowth/
 
 role: Algorithm, interface

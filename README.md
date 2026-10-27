@@ -244,6 +244,17 @@ beginning with `_` or `.` are ignored.
 - Re-runs skip images whose source has not changed, and delete outputs whose
   source has been renamed or removed — otherwise dead files ship forever.
 
+## Archive
+
+`/archive` is a pinboard of ideas, sketches and works, filtered by kind and tag
+(both in the hash, `#kind/tag`). It reads `content/archive/<kind>/` — the folder
+name is the kind, and a new folder becomes a new filter. A picture or clip is an
+entry; a `.md` beside it with the same name adds title, year, tags, link and a
+note; a `.md` alone is a written idea. See `content/archive/_README.md`. Every
+project's cover joins in automatically as a "works" entry. Media goes through
+the same pipeline into `public/archive-media/` (not `public/archive/`, which
+would shadow the route) and `src/data/archive.generated.ts`.
+
 Both generated outputs are gitignored — they are rebuilt from `content/`.
 
 Everything is placeholder text for now. Also edit:

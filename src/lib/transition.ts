@@ -96,8 +96,8 @@ export function veilIndex(chosenTile: Element | null) {
   // image is never absent from the screen.
   veilTwin = null;
   if (chosenTile) {
-    const index = Array.from(screen.querySelectorAll(".tile")).indexOf(chosenTile);
-    veilTwin = clone.querySelectorAll<HTMLElement>(".tile")[index] ?? null;
+    const index = Array.from(screen.querySelectorAll(".tile, .card-art")).indexOf(chosenTile);
+    veilTwin = clone.querySelectorAll<HTMLElement>(".tile, .card-art")[index] ?? null;
   }
 
   document.body.appendChild(clone);

@@ -188,6 +188,18 @@ export function Nav() {
                 </PillButton>
               </div>
 
+              <div className="nav-archive flex items-center">
+                <PillButton
+                  active={pathname.startsWith("/archive")}
+                  onClick={() => {
+                    setOpen(null);
+                    router.push("/archive");
+                  }}
+                >
+                  archive
+                </PillButton>
+              </div>
+
               <div className="nav-contact flex items-center">
                 <PillButton
                   active={open === "contact"}

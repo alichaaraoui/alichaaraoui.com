@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 
-/* The big lines. His own words, one per line. */
-const facts = [
-  "I love design.",
-  "I love technology.",
-  "I am obsessed with",
-  "the intersections",
-  "between the two.",
+/* The big lines. His own words, one per line. Everything is grey but the
+   three things he loves, which are what the eye should land on. */
+const facts: [string, string?][] = [
+  ["I love ", "design."],
+  ["I love ", "technology."],
+  ["I am obsessed with"],
+  ["the ", "intersections"],
+  ["between the two."],
 ];
 
 const experience = [
@@ -109,21 +110,20 @@ export function AboutRoll() {
             Charlotte, NC{time && <span className="about-dim">, {time}</span>}
           </p>
           <p className="about-intro">
-            Hey, I&apos;m Ali. I study computer science, AI and architecture at
-            UNC Charlotte, and I&apos;m happiest when I get to bring design and
-            technology together. I care a lot about the little details and how
-            things actually feel to the people using them. Right now I&apos;m
-            researching how AI can learn growth patterns, building tools for
-            architects at Little and running Studio 49. I graduate in 2027 and
-            I&apos;m looking for a team to grow, learn and build great things
-            with.
+            {/* The first thing to read on the page, so it is set apart. */}
+            <span className="about-hey">Hey, I&apos;m Ali.</span>
+            I care a lot about the little details, and how things actually
+            feel to the people using them.
           </p>
         </motion.div>
 
         <ul className="about-facts">
-          {facts.map((f, i) => (
-            <li key={f}>
-              <motion.span {...rise(0.15 + i * 0.06)}>{f}</motion.span>
+          {facts.map(([lead, word], i) => (
+            <li key={lead + (word ?? "")}>
+              <motion.span {...rise(0.15 + i * 0.06)}>
+                <span className="about-facts-dim">{lead}</span>
+                {word}
+              </motion.span>
             </li>
           ))}
         </ul>

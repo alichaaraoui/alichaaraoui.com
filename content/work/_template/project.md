@@ -12,6 +12,7 @@ order: 50                     # lower numbers come first in the grid
 # href: https://example.com   # adds a "Visit" link
 # hero: 02-whatever.jpg       # defaults to the first image alphabetically
 # cover: cover.jpg            # what the index and reels show; defaults to the hero
+# card: 01-dashboard.mp4      # software grid card: the app in use; defaults to the cover
 # aspect: landscape           # portrait | tall | landscape | square
 #                             # only needed when there are no images yet
 role: Your role
