@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meridian TMS — demo recreation</title>
+<style>
+  :root { --nav:#1E2A3A; --ink:#1F2937; --mute:#6B7280; --line:#E5E7EB; --bg:#F5F6F8; --accent:#2F6FB3; --green:#15803D; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: var(--nav); color: #fff; display: flex; align-items: center; gap: 22px; padding: 0 18px; height: 46px; }
+  header .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: .3px; }
+  header .logo i { width: 22px; height: 22px; border-radius: 4px; background: #fff; color: var(--nav); display: grid; place-items: center; font-style: normal; font-size: 14px; }
+  header nav { display: flex; gap: 16px; font-size: 13px; opacity: .85; }
+  header nav b { font-weight: 600; opacity: 1; border-bottom: 2px solid #fff; padding-bottom: 12px; margin-bottom: -14px; }
+  header .user { margin-left: auto; font-size: 12px; opacity: .8; }
+  main { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .bar h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  .status { background: #DBEAFE; color: #1E40AF; font-weight: 600; font-size: 11px; padding: 3px 8px; border-radius: 4px; }
+  .chip { border: 1px solid var(--line); background: #fff; font-size: 11px; padding: 2px 7px; border-radius: 4px; color: var(--mute); }
+  .actions { margin-left: auto; display: flex; gap: 6px; }
+  .actions span { border: 1px solid var(--line); background: #fff; border-radius: 4px; padding: 5px 10px; font-size: 12px; }
+  .actions span.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lane { color: var(--mute); }
+  .money { display: flex; gap: 22px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; }
+  .money div small { display: block; color: var(--mute); font-size: 11px; letter-spacing: .5px; }
+  .money div b { font-size: 18px; }
+  .money .gp b { color: var(--green); }
+  .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .tabs span { padding: 6px 0; color: var(--mute); }
+  .tabs span.on { color: var(--ink); font-weight: 600; border-bottom: 2px solid var(--accent); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 13px; }
+  dl { margin: 0; display: grid; grid-template-columns: 130px 1fr; gap: 5px 10px; font-size: 13px; }
+  dt { color: var(--mute); font-size: 11px; letter-spacing: .4px; text-transform: uppercase; padding-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--line); padding: 5px 4px; }
+  td { padding: 6px 4px; border-bottom: 1px solid #F1F2F4; }
+  td.r, th.r { text-align: right; }
+  .note { background: #F9FAFB; border-left: 3px solid var(--accent); padding: 8px 10px; font-size: 13px; }
+  footer { text-align: center; color: var(--mute); font-size: 11px; padding: 8px 0 14px; }
+  .empty { padding: 60px; text-align: center; color: var(--mute); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i>M</i> Meridian TMS</div>
+  <nav><span>Dashboard</span><b>Quotes</b><span>Shipments</span><span>Tracking</span><span>Customers</span><span>Carriers</span><span>Facilities</span></nav>
+  <span class="user">Meridian Logistics · DAL</span>
+</header>
+<main id="app"></main>
+<footer>Meridian TMS — recreated for the Return Trip online demo, from the quotes Return Trip created in the Meridian sandbox</footer>
+<script>window.__QUOTES = {"7300182":{"accessorials":["live load","seal required at pickup (BBR-DC135)","driver ID required at pickup (BBR-DC135)","appointment required at pickup (BBR-DC135)","lumper required at pickup (BBR-DC135)"],"buy_lines":[{"amount":1240.21,"charge_code":"FRT","description":"Backhaul linehaul","quantity":1,"rate":1240.21,"rate_basis":"FLAT"},{"amount":527.25,"charge_code":"FSC","description":"Fuel surcharge @ 0.57/mi","quantity":925,"rate":0.57,"rate_basis":"PER_MILE"}],"carrier_id":"ACMECARR","category":"RETAIL_RETURNS","customer_id":"NORTHSTAR","destination":{"city":"Chicago","facility_id":"NORTHSTAR-CHI","name":"Northstar Manufacturing - Chicago Dock","state":"IL"},"equipment_type":"V","freight_lines":[{"description":"store returns + salvage, mostly damaged POS display units and some shelving hardware","hazmat":false,"package_type":"PALLET","pieces":18,"weight_lb":14200}],"miles":925,"mode":"TL","origin":{"city":"Dallas","facility_id":"BBR-DC135","name":"Big-Box DC135","state":"TX","zip":"75241"},"outbound_file":"7300147","pickup_date":"2026-11-17","prospect_id":"email-em_da23987cf9","references":[{"type":"RA","value":"RTV-135-20417"},{"type":"PO","value":"4471882"}],"source":"email","source_email_id":"em_da23987cf9","target_margin_pct":10,"trailer_number":"53631","sell":1905.26,"customer":"Northstar Manufacturing","equipment":"V","valid_until":"11/20/26"},"7300198":{"accessorials":["seal required at pickup (BBR-DC135)","driver ID required at pickup (BBR-DC135)","appointment required at pickup (BBR-DC135)","lumper required at pickup (BBR-DC135)"],"buy_lines":[{"amount":1240.21,"charge_code":"FRT","description":"Backhaul linehaul","quantity":1,"rate":1240.21,"rate_basis":"FLAT"},{"amount":310.65,"charge_code":"FSC","description":"Fuel surcharge @ 0.57/mi","quantity":545,"rate":0.57,"rate_basis":"PER_MILE"}],"carrier_id":"ACMECARR","category":"FOOD","customer_id":"MIDWAYDST","destination":{"city":"Kansas City","facility_id":"MIDWAY-MKC","name":"Midway Distributors KC Warehouse","state":"MO"},"equipment_type":"V","freight_lines":[{"description":"canned goods and boxed dry grocery","hazmat":false,"package_type":"PALLET","pieces":20,"weight_lb":31000}],"miles":545,"mode":"TL","origin":{"city":"Dallas","facility_id":"BBR-DC135","name":"Big-Box DC135","state":"TX"},"outbound_file":"7300147","pickup_date":"2026-11-16","prospect_id":"email-em_6839d84bc1","references":[{"type":"PO","value":"MD-55190"}],"source":"email","source_email_id":"em_6839d84bc1","target_margin_pct":10,"trailer_number":"53631","sell":1688.66,"customer":"Midway Distributors","equipment":"V","valid_until":"11/20/26"}};</script>
+<script>
+  const QUOTES = window.__QUOTES || {}
+  const usd = (n) => n == null ? '—' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  const id = ((location.hash || location.pathname).match(/quotes\/(\d+)/) || [])[1]
+  const q = QUOTES[id]
+  const app = document.getElementById('app')
+  if (!q) {
+    app.innerHTML = '<div class="empty">Quotes</div>'
+  } else {
+    const cost = q.buy_lines.reduce((t, l) => t + l.amount, 0)
+    const gp = q.sell - cost
+    const place = (p) => `${esc(p.name)}<br>${esc(p.city)}, ${esc(p.state)}${p.zip ? ' ' + esc(p.zip) : ''}`
+    app.innerHTML = `
+      <div class="bar">
+        <h1>Quote # ${esc(id)}</h1><span class="status">QUOTED</span><span class="chip">TL · ${esc(q.equipment)}</span>
+        <div class="actions"><span>Save</span><span>Rate</span><span>Send</span><span>Accept</span><span>Decline</span><span>Clone</span><span class="primary">Convert to Shipment</span></div>
+      </div>
+      <div class="lane">${esc(q.customer)} (${esc(q.customer_id)}) · ${esc(q.origin.name)}, ${esc(q.origin.city)}, ${esc(q.origin.state)} → ${esc(q.destination.name)}, ${esc(q.destination.city)}, ${esc(q.destination.state)} · Valid until ${esc(q.valid_until)}</div>
+      <div class="money"><div><small>SELL</small><b>${usd(q.sell)}</b></div><div><small>COST</small><b>${usd(cost)}</b></div><div class="gp"><small>GP</small><b>${usd(gp)} (${(gp / q.sell * 100).toFixed(1)}%)</b></div><div><small>MILES</small><b>${esc(q.miles)}</b></div></div>
+      <div class="tabs"><span class="on">Quote</span><span>Costs &amp; Charges</span><span>Documents</span><span>Notes</span></div>
+      <div class="grid">
+        <div class="card"><h3>Customer &amp; lane</h3><dl>
+          <dt>Customer</dt><dd>${esc(q.customer)} (${esc(q.customer_id)})</dd>
+          <dt>Origin</dt><dd>${place(q.origin)}</dd>
+          <dt>Destination</dt><dd>${place(q.destination)}</dd>
+          <dt>Pickup</dt><dd>${esc(q.pickup_date)}</dd>
+          <dt>References</dt><dd>${q.references.map((r) => esc(r.type) + ' ' + esc(r.value)).join(' · ') || '—'}</dd>
+        </dl></div>
+        <div class="card"><h3>Freight</h3><table><tr><th>Description</th><th class="r">Pieces</th><th class="r">Weight</th></tr>
+          ${q.freight_lines.map((f) => `<tr><td>${esc(f.description)}</td><td class="r">${esc(f.pieces)} ${esc(String(f.package_type || '').toLowerCase())}</td><td class="r">${Number(f.weight_lb).toLocaleString()} lb</td></tr>`).join('')}
+        </table><p style="margin:10px 0 0; font-size:12px; color:var(--mute);">${q.accessorials.map(esc).join(' · ')}</p></div>
+        <div class="card"><h3>Buy (carrier ${esc(q.carrier_id)})</h3><table><tr><th>Code</th><th>Description</th><th class="r">Amount</th></tr>
+          ${q.buy_lines.map((l) => `<tr><td>${esc(l.charge_code)}</td><td>${esc(l.description)}</td><td class="r">${usd(l.amount)}</td></tr>`).join('')}
+          <tr><td></td><td><b>Total cost</b></td><td class="r"><b>${usd(cost)}</b></td></tr></table></div>
+        <div class="card"><h3>Notes</h3><div class="note">Return Trip backhaul for the truck on file ${esc(q.outbound_file)} (${esc(q.category)}). Approved by a human in Return Trip.</div>
+          <p style="margin:10px 0 0; font-size:12px; color:var(--mute);">Rate source: return-trip:${esc(q.outbound_file)} · target margin 10%</p></div>
+      </div>`
+  }
+</script>
+</body>
+</html>
