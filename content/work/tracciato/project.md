@@ -22,7 +22,13 @@ with sections. Ongoing research.
 
 [Live site ↗](https://alichaaraoui.github.io/tracciato/)
 
-![Twelve of the 48 plan constructions.](08-constructions.webp)
+![All 48 plans, top view: grey lines are the construction, black is the wall.](11-plans.webp)
+
+![All 48 objects, isometric.](12-objects-iso.webp)
+
+![The 24 hybrids, isometric: translated (top) and clashed (bottom).](13-hybrids-iso.webp)
+
+![The 12 drawings the hybrids came from.](14-hybrid-plans.webp)
 
 ![Construction, isometric, underside and section.](05-spread.webp)
 
