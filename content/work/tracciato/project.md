@@ -41,7 +41,7 @@ own smaller figure.
 
 ![All 48 objects, isometric.](12-objects-iso.webp)
 
-![Construction, isometric, underside and section.](05-spread.webp)
+![Plan, isometric, underside and section.](05-spread.webp)
 
 ![Glossy black with white edges, plans cut at floor level.](06-spread-sections.webp)
 
@@ -52,9 +52,11 @@ plan's footprint intersected with two sections: the network's own
 (**translated**) or two real ones from unrelated buildings (**clashed**). An
 early run: the network mostly echoed its input.
 
-![The 24 hybrids, isometric: translated (top) and clashed (bottom).](13-hybrids-iso.webp)
+![Translated: the network's own sections.](13-hybrids-translated.webp)
 
-![The 12 drawings the hybrids came from.](14-hybrid-plans.webp)
+![Clashed: two real sections from unrelated buildings.](14-hybrids-clashed.webp)
+
+![The 12 drawings the hybrids came from.](15-hybrid-plans.webp)
 
 ## 4. The site
 
