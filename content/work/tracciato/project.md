@@ -6,7 +6,7 @@ blurb: objects generated from borromini's geometric method
 order: 0.5
 href: https://alichaaraoui.github.io/tracciato/
 hero: 00-loop.mp4
-cover: cover.webp
+cover: cover.gif
 card: 00-loop.mp4
 role: Research, code, 3D and web
 stack: Python, Shapely, Blender, PyTorch (CycleGAN), three.js

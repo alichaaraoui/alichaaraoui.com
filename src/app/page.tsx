@@ -27,7 +27,11 @@ export default function Home() {
   return (
     <div className="screen">
       <main className="min-h-0 flex-1">
-        {visible.length === 0 ? (
+        {!phone && view === "grid" ? (
+          /* The grid is the overview: every project, architecture and
+             software together, whichever discipline is selected. */
+          <GridView projects={projects} />
+        ) : visible.length === 0 ? (
           <Empty category={category} />
         ) : category === "software" ? (
           /* Software reads as a plain grid of cards whatever the view says,
@@ -35,7 +39,7 @@ export default function Home() {
           <CardGrid projects={visible} />
         ) : (
           <>
-            {(phone || view === "grid") && <GridView projects={visible} />}
+            {phone && <GridView projects={visible} />}
             {!phone && view === "index" && <IndexView projects={visible} />}
             {!phone && view === "reel" && <ReelView projects={visible} />}
           </>
