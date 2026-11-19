@@ -22,16 +22,43 @@ with sections. Ongoing research.
 
 [Live site ↗](https://alichaaraoui.github.io/tracciato/)
 
+## 1. Plans
+
+Each plan starts from **one regular figure or two overlapping copies**:
+Sant'Ivo's two triangles, two squares, a pentagon, a hexagon. Every side of
+the core then gets an **apse, a deep niche, a bulging wall, a concave star
+point or a straight wall**; some plans gain corner columns, some are
+**stretched into an oval**, as at San Carlo.
+
 ![All 48 plans, top view: grey lines are the construction, black is the wall.](11-plans.webp)
 
+## 2. Objects
+
+The plan is carried upward along **720 rays**, so every level keeps the
+figure: walls, **pilasters where the construction lines meet**, an
+entablature, then a **Sant'Ivo** or **San Carlo** dome and a lantern with its
+own smaller figure.
+
 ![All 48 objects, isometric.](12-objects-iso.webp)
-
-![The 24 hybrids, isometric: translated (top) and clashed (bottom).](13-hybrids-iso.webp)
-
-![The 12 drawings the hybrids came from.](14-hybrid-plans.webp)
 
 ![Construction, isometric, underside and section.](05-spread.webp)
 
 ![Glossy black with white edges, plans cut at floor level.](06-spread-sections.webp)
 
-![The object view on the site.](10-objects.webp)
+## 3. Hybrids
+
+A **CycleGAN** trained on unpaired Roman plans and sections. Each form is a
+plan's footprint intersected with two sections: the network's own
+(**translated**) or two real ones from unrelated buildings (**clashed**). An
+early run: the network mostly echoed its input.
+
+![The 24 hybrids, isometric: translated (top) and clashed (bottom).](13-hybrids-iso.webp)
+
+![The 12 drawings the hybrids came from.](14-hybrid-plans.webp)
+
+## 4. The site
+
+All 72 forms in a live viewer: the plan and a generated description beside
+each, height and depth cuts, and a view that eases back after you let go.
+
+![The object view.](10-objects.webp)
