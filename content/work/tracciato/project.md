@@ -58,9 +58,21 @@ early run: the network mostly echoed its input.
 
 ![The 12 drawings the hybrids came from.](15-hybrid-plans.webp)
 
-## 4. The site
+## 4. Grammar
 
-All 72 forms in a live viewer: the plan and a generated description beside
+A second generator built from the sources: a **staged grammar** after Stiny
+and Mitchell, with each rule cited to Hill, Connors, Smyth-Pinney and
+Morrogh. It re-derives **San Carlo** and **Sant'Ivo**, then goes past them:
+figures **interlocked into chains** as Guarini did, and **transforms** of
+the Sant'Ivo figure. Vaults come from the same figures as the plan.
+
+![Plan, isometric, underside and section.](07-spread-grammar.webp)
+
+![All 48 grammar objects, isometric.](16-grammar-iso.webp)
+
+## 5. The site
+
+All 120 forms in a live viewer: the plan and a generated description beside
 each, height and depth cuts, and a view that eases back after you let go.
 
 ![The object view.](10-objects.webp)
